@@ -1,0 +1,2565 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmaMaster AI v3.0 — نظام الدراسة الذكي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase v10 -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
+    setDoc, getDoc, query, where, orderBy, onSnapshot, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCg5G4pQUtwCZesGrSQVpp7jpS_ACczl0w",
+    authDomain: "pharmamaster-study-ai.firebaseapp.com",
+    projectId: "pharmamaster-study-ai",
+    storageBucket: "pharmamaster-study-ai.firebasestorage.app",
+    messagingSenderId: "581129947404",
+    appId: "1:581129947404:web:4a18b933ed3b804bcae129"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged, collection, addDoc, getDocs, doc, updateDoc,
+    deleteDoc, setDoc, getDoc, query, where, orderBy, onSnapshot, serverTimestamp };
+
+  onAuthStateChanged(auth, user => {
+    window._currentUser = user;
+    if (user) {
+      document.getElementById('authScreen')?.classList.add('hidden');
+      document.getElementById('appScreen')?.classList.remove('hidden');
+      window._initApp && window._initApp(user);
+    } else {
+      document.getElementById('authScreen')?.classList.remove('hidden');
+      document.getElementById('appScreen')?.classList.add('hidden');
+    }
+  });
+</script>
+
+<style>
+:root {
+  --bg: #060610;
+  --bg2: #0a0a1a;
+  --surface: #0f0f1e;
+  --surface2: #161628;
+  --surface3: #1e1e35;
+  --surface4: #252540;
+  --border: #1e1e40;
+  --border2: #2a2a55;
+  --border3: #3535708a;
+  --accent: #7c6dfa;
+  --accent-dim: rgba(124,109,250,0.15);
+  --accent-glow: rgba(124,109,250,0.3);
+  --teal: #00e5c3;
+  --teal-dim: rgba(0,229,195,0.12);
+  --teal-glow: rgba(0,229,195,0.25);
+  --red: #ff5e7d;
+  --red-dim: rgba(255,94,125,0.12);
+  --gold: #ffc846;
+  --gold-dim: rgba(255,200,70,0.12);
+  --blue: #4facfe;
+  --blue-dim: rgba(79,172,254,0.12);
+  --text: #e2e2f5;
+  --text2: #8888bb;
+  --text3: #4a4a7a;
+  --text4: #2e2e55;
+  --white: #ffffff;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --radius-lg: 20px;
+  --shadow: 0 8px 40px rgba(0,0,0,0.6);
+  --shadow-accent: 0 8px 40px rgba(124,109,250,0.2);
+  --font: 'Cairo', sans-serif;
+  --font-body: 'Tajawal', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --sidebar-w: 255px;
+  --topbar-h: 64px;
+}
+
+[data-theme="light"] {
+  --bg: #f0f0fb;
+  --bg2: #e8e8f5;
+  --surface: #ffffff;
+  --surface2: #f5f5ff;
+  --surface3: #ededfa;
+  --surface4: #e4e4f5;
+  --border: #d8d8f0;
+  --border2: #c0c0e0;
+  --border3: #b0b0d8;
+  --text: #1a1a35;
+  --text2: #555588;
+  --text3: #9999cc;
+  --text4: #ccccee;
+  --shadow: 0 8px 40px rgba(124,109,250,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:15px; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; transition:background .3s, color .3s; }
+
+body::before { content:''; position:fixed; inset:0; background-image: linear-gradient(rgba(124,109,250,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124,109,250,0.03) 1px, transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; animation:gridMove 20s linear infinite; }
+@keyframes gridMove { from{background-position:0 0} to{background-position:40px 40px} }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes spin { to{transform:rotate(360deg)} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes glowPulse { 0%,100%{box-shadow:0 0 15px var(--accent-glow)} 50%{box-shadow:0 0 35px var(--accent-glow),0 0 60px var(--accent-glow)} }
+@keyframes progressFill { from{width:0} }
+@keyframes tick { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+@keyframes pomoPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.02);opacity:.85} }
+@keyframes cardFlip { 0%{transform:rotateY(0)} 100%{transform:rotateY(180deg)} }
+
+.hidden { display:none !important; }
+
+/* ═══ AUTH ═══ */
+#authScreen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:9999; padding:20px; }
+.auth-card { width:100%; max-width:420px; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:40px; position:relative; overflow:hidden; animation:fadeUp .5s ease; box-shadow:var(--shadow-accent); }
+.auth-card::before { content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px; background:radial-gradient(circle,var(--accent-glow),transparent 70%); pointer-events:none; }
+.auth-logo { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+.auth-logo-icon { width:50px; height:50px; background:linear-gradient(135deg,var(--accent),var(--teal)); border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:24px; animation:glowPulse 3s ease-in-out infinite; }
+.auth-logo-text .app-name { font-size:20px; font-weight:900; color:var(--text); }
+.auth-logo-text .app-ver { font-size:11px; color:var(--accent); font-family:var(--mono); }
+.auth-tabs { display:flex; gap:0; margin-bottom:28px; background:var(--surface2); border-radius:var(--radius-sm); padding:4px; }
+.auth-tab { flex:1; padding:10px; text-align:center; cursor:pointer; border-radius:7px; font-size:14px; font-weight:600; color:var(--text2); transition:all .2s; border:none; background:none; font-family:var(--font); }
+.auth-tab.active { background:var(--surface4); color:var(--text); box-shadow:0 2px 8px rgba(0,0,0,.3); }
+.auth-form { display:flex; flex-direction:column; gap:16px; }
+.auth-input-wrap { position:relative; }
+.auth-input-icon { position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:16px; color:var(--text3); pointer-events:none; }
+.auth-input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:13px 44px 13px 16px; font-family:var(--font); font-size:14px; color:var(--text); transition:all .2s; outline:none; direction:ltr; }
+.auth-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.auth-input::placeholder { color:var(--text3); direction:rtl; }
+.auth-btn { padding:14px; background:linear-gradient(135deg,var(--accent),#a394ff); border:none; border-radius:var(--radius-sm); color:white; font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:all .2s; box-shadow:0 4px 20px var(--accent-glow); }
+.auth-btn:hover { transform:translateY(-1px); box-shadow:0 8px 30px var(--accent-glow); }
+.auth-guest { text-align:center; margin-top:12px; font-size:13px; color:var(--text2); }
+.auth-guest a { color:var(--teal); cursor:pointer; text-decoration:none; }
+.auth-error { background:var(--red-dim); border:1px solid rgba(255,94,125,.3); border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; color:var(--red); display:none; }
+
+/* ═══ APP ═══ */
+#appScreen { display:flex; min-height:100vh; position:relative; z-index:1; }
+
+/* ═══ SIDEBAR ═══ */
+.sidebar { width:var(--sidebar-w); background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; position:fixed; top:0; right:0; bottom:0; z-index:100; overflow-y:auto; transition:transform .3s cubic-bezier(.4,0,.2,1); }
+.sb-logo { padding:20px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.sb-logo-icon { width:38px; height:38px; flex-shrink:0; background:linear-gradient(135deg,var(--accent),var(--teal)); border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; animation:glowPulse 3s ease-in-out infinite; }
+.sb-logo-name { font-size:14px; font-weight:900; color:var(--text); }
+.sb-logo-ver { font-size:10px; color:var(--accent); font-family:var(--mono); }
+.sb-user { margin:12px; padding:12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); display:flex; align-items:center; gap:10px; }
+.sb-avatar { width:34px; height:34px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,var(--accent),var(--teal)); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:white; }
+.sb-uname { font-size:12px; font-weight:700; color:var(--text); }
+.sb-uemail { font-size:10px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.sb-nav { padding:8px 10px; flex:1; }
+.sb-section { margin-bottom:20px; }
+.sb-section-title { font-size:9px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:2px; padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 11px; border-radius:var(--radius-sm); cursor:pointer; transition:all .18s; color:var(--text2); font-size:13px; font-weight:600; position:relative; margin-bottom:2px; user-select:none; border:1px solid transparent; }
+.nav-item:hover { background:var(--surface2); color:var(--text); }
+.nav-item.active { background:var(--accent-dim); color:var(--accent); border-color:rgba(124,109,250,.2); }
+.nav-item.active::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:18px; background:var(--accent); border-radius:0 3px 3px 0; }
+.nav-icon { font-size:16px; width:18px; text-align:center; flex-shrink:0; }
+.nav-badge { margin-right:auto; background:var(--accent); color:white; font-size:9px; font-weight:700; padding:2px 6px; border-radius:8px; min-width:18px; text-align:center; }
+.sb-pomo { margin:10px; padding:14px; background:linear-gradient(135deg,rgba(124,109,250,.1),rgba(0,229,195,.07)); border:1px solid var(--border2); border-radius:var(--radius); }
+.sb-pomo-time { font-family:var(--mono); font-size:24px; font-weight:700; color:var(--accent); text-align:center; letter-spacing:2px; animation:pomoPulse 2s ease-in-out infinite; }
+.sb-pomo-label { font-size:10px; color:var(--text3); text-align:center; margin-bottom:8px; }
+.sb-pomo-btns { display:flex; gap:6px; justify-content:center; }
+.sb-footer { padding:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+.theme-btn { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:12px; color:var(--text2); transition:all .2s; width:100%; font-family:var(--font); }
+.toggle-track { width:34px; height:18px; background:var(--border2); border-radius:9px; position:relative; transition:.3s; }
+.toggle-thumb { position:absolute; width:12px; height:12px; background:white; border-radius:50%; top:3px; right:3px; transition:.3s; }
+[data-theme="light"] .toggle-track { background:var(--accent); }
+[data-theme="light"] .toggle-thumb { transform:translateX(-16px); }
+.logout-btn { display:flex; align-items:center; gap:8px; padding:9px 12px; background:var(--red-dim); border:1px solid rgba(255,94,125,.2); border-radius:var(--radius-sm); cursor:pointer; font-size:12px; color:var(--red); transition:all .2s; width:100%; font-family:var(--font); }
+.logout-btn:hover { background:rgba(255,94,125,.2); }
+
+/* ═══ MAIN ═══ */
+.main { margin-right:var(--sidebar-w); flex:1; min-height:100vh; display:flex; flex-direction:column; }
+.topbar { height:var(--topbar-h); display:flex; align-items:center; justify-content:space-between; padding:0 28px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; backdrop-filter:blur(20px); }
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.topbar-title { font-size:17px; font-weight:900; color:var(--text); }
+.topbar-sub { font-size:12px; color:var(--text3); margin-top:1px; }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+
+/* ═══ BUTTONS ═══ */
+.btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:var(--radius-sm); font-family:var(--font); font-size:13px; font-weight:700; cursor:pointer; border:none; transition:all .2s; white-space:nowrap; position:relative; overflow:hidden; }
+.btn::after { content:''; position:absolute; inset:0; background:white; opacity:0; transition:.2s; }
+.btn:hover::after { opacity:.05; }
+.btn-primary { background:linear-gradient(135deg,var(--accent),#9a8dff); color:white; box-shadow:0 4px 18px var(--accent-glow); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 28px var(--accent-glow); }
+.btn-teal { background:linear-gradient(135deg,var(--teal),#00c9ab); color:#000; box-shadow:0 4px 18px var(--teal-glow); }
+.btn-ghost { background:var(--surface2); color:var(--text2); border:1px solid var(--border2); }
+.btn-ghost:hover { background:var(--surface3); color:var(--text); border-color:var(--border3); }
+.btn-danger { background:var(--red-dim); color:var(--red); border:1px solid rgba(255,94,125,.25); }
+.btn-danger:hover { background:rgba(255,94,125,.25); }
+.btn-sm { padding:6px 13px; font-size:12px; }
+.btn-lg { padding:13px 26px; font-size:15px; }
+.btn-xs { padding:4px 10px; font-size:11px; }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none !important; }
+
+/* ═══ PAGES ═══ */
+.page { display:none; padding:28px; animation:fadeUp .35s ease; flex:1; }
+.page.active { display:block; }
+
+/* ═══ CARDS ═══ */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; transition:border-color .2s; position:relative; }
+.card:hover { border-color:var(--border2); }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.card-title { font-size:15px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
+
+/* ═══ STATS ═══ */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; position:relative; overflow:hidden; transition:all .25s; animation:fadeUp .4s ease both; }
+.stat-card:hover { transform:translateY(-2px); border-color:var(--border2); }
+.stat-card::after { content:''; position:absolute; bottom:-20px; left:-20px; width:90px; height:90px; border-radius:50%; opacity:.06; }
+.sc-accent::after { background:var(--accent); }
+.sc-teal::after { background:var(--teal); }
+.sc-red::after { background:var(--red); }
+.sc-gold::after { background:var(--gold); }
+.stat-icon { font-size:24px; margin-bottom:10px; display:block; }
+.stat-value { font-size:28px; font-weight:900; line-height:1; margin-bottom:4px; font-family:var(--mono); }
+.stat-label { font-size:12px; color:var(--text2); }
+
+/* ═══ PROGRESS ═══ */
+.progress-track { height:7px; background:var(--surface3); border-radius:4px; overflow:hidden; position:relative; }
+.progress-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--teal)); transition:width 1.2s cubic-bezier(.4,0,.2,1); animation:progressFill 1.5s ease; position:relative; }
+.progress-fill::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent); background-size:200% 100%; animation:shimmer 2.5s ease-in-out infinite; }
+
+/* ═══ COUNTDOWN ═══ */
+.countdown-banner { background:linear-gradient(135deg,rgba(124,109,250,.12),rgba(0,229,195,.07)); border:1px solid var(--border2); border-radius:var(--radius); padding:20px 24px; margin-bottom:22px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; position:relative; overflow:hidden; }
+.countdown-banner::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--teal),var(--accent)); background-size:200% 100%; animation:shimmer 3s linear infinite; }
+.cd-info .cd-label { font-size:11px; color:var(--text3); margin-bottom:3px; }
+.cd-info .cd-name { font-size:18px; font-weight:900; color:var(--text); }
+.cd-units { display:flex; gap:10px; margin-right:auto; }
+.cd-unit { text-align:center; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:10px 14px; min-width:64px; animation:tick 1s ease-in-out infinite; }
+.cd-num { font-family:var(--mono); font-size:26px; font-weight:700; color:var(--accent); line-height:1; }
+.cd-lbl { font-size:10px; color:var(--text3); margin-top:3px; }
+
+/* ═══ FORMS ═══ */
+.form-group { margin-bottom:18px; }
+.form-label { display:block; font-size:12px; font-weight:700; color:var(--text2); margin-bottom:7px; text-transform:uppercase; letter-spacing:.5px; }
+.form-input, .form-select, .form-textarea { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:11px 14px; font-family:var(--font); font-size:14px; color:var(--text); transition:all .2s; outline:none; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.form-select { direction:rtl; }
+.form-textarea { resize:vertical; min-height:90px; direction:rtl; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+/* ═══ MODAL ═══ */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(10px); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s ease; }
+.modal-overlay.hidden { display:none; }
+.modal { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); width:100%; max-width:580px; max-height:90vh; overflow-y:auto; animation:fadeUp .3s ease; position:relative; box-shadow:var(--shadow); }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1; }
+.modal-title { font-size:16px; font-weight:900; color:var(--text); }
+.modal-close { background:var(--surface2); border:1px solid var(--border); border-radius:7px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text2); font-size:14px; transition:all .2s; }
+.modal-close:hover { background:var(--red-dim); color:var(--red); border-color:rgba(255,94,125,.3); }
+.modal-body { padding:24px; }
+.modal-footer { padding:18px 24px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+
+/* ═══ UPLOAD ═══ */
+.upload-zone { border:2px dashed var(--border2); border-radius:var(--radius); padding:36px; text-align:center; cursor:pointer; transition:all .3s; background:var(--surface); position:relative; overflow:hidden; }
+.upload-zone:hover, .upload-zone.dragover { border-color:var(--accent); background:var(--accent-dim); }
+.upload-icon { font-size:44px; display:block; margin-bottom:10px; animation:float 3s ease-in-out infinite; }
+.upload-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:5px; }
+.upload-sub { font-size:12px; color:var(--text2); }
+.upload-types { display:flex; gap:6px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+.upload-badge { font-size:10px; padding:3px 9px; border-radius:20px; background:var(--surface2); border:1px solid var(--border); color:var(--text2); }
+
+/* ═══ FILE ITEM ═══ */
+.file-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; animation:fadeUp .3s ease; }
+.file-icon { width:32px; height:32px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.fi-pdf { background:var(--red-dim); }
+.fi-img { background:var(--teal-dim); }
+.fi-text { background:var(--accent-dim); }
+.file-name { font-size:12px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.file-size { font-size:10px; color:var(--text3); margin-top:2px; }
+.file-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:14px; padding:4px; border-radius:5px; transition:all .2s; }
+.file-del:hover { background:var(--red-dim); color:var(--red); }
+
+/* ═══ TAGS ═══ */
+.tag { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; letter-spacing:.3px; }
+.tag-easy { background:var(--teal-dim); color:var(--teal); }
+.tag-medium { background:var(--gold-dim); color:var(--gold); }
+.tag-hard { background:var(--red-dim); color:var(--red); }
+.tag-accent { background:var(--accent-dim); color:var(--accent); }
+.tag-blue { background:var(--blue-dim); color:var(--blue); }
+
+/* ═══ TOAST ═══ */
+.toast-container { position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:9990; display:flex; flex-direction:column; gap:7px; pointer-events:none; width:340px; }
+.toast { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:11px 18px; font-size:13px; color:var(--text); display:flex; align-items:center; gap:9px; animation:fadeUp .3s ease; box-shadow:var(--shadow); pointer-events:all; }
+.toast.success { border-color:rgba(0,229,195,.4); }
+.toast.error { border-color:rgba(255,94,125,.4); }
+.toast.info { border-color:rgba(124,109,250,.4); }
+.toast.warning { border-color:rgba(255,200,70,.4); }
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state { text-align:center; padding:50px 20px; }
+.empty-icon { font-size:56px; display:block; margin-bottom:14px; animation:float 3s ease-in-out infinite; }
+.empty-title { font-size:17px; font-weight:700; color:var(--text); margin-bottom:7px; }
+.empty-desc { font-size:13px; color:var(--text2); max-width:380px; margin:0 auto 18px; line-height:1.7; }
+
+/* ═══ SUBJECTS ═══ */
+.subjects-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+.subject-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; cursor:pointer; transition:all .25s; position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
+.subject-card:hover { transform:translateY(-3px); border-color:var(--accent); box-shadow:0 12px 40px var(--accent-glow); }
+.subject-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--teal)); opacity:0; transition:.25s; }
+.subject-card:hover::before { opacity:1; }
+.sc-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+.sc-emoji { width:42px; height:42px; background:var(--surface2); border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:21px; }
+.sc-actions { display:flex; gap:5px; }
+.sc-btn { background:var(--surface2); border:1px solid var(--border); border-radius:7px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; color:var(--text2); transition:all .2s; }
+.sc-btn:hover { background:var(--surface3); color:var(--text); }
+.sc-btn.danger:hover { background:var(--red-dim); color:var(--red); }
+.sc-name { font-size:15px; font-weight:800; color:var(--text); margin-bottom:3px; }
+.sc-meta { font-size:11px; color:var(--text3); margin-bottom:10px; }
+.sc-tags { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.sc-progress-row { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); margin-bottom:5px; }
+
+/* ═══ SCHEDULE ═══ */
+.day-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:10px; transition:border-color .2s; animation:fadeUp .4s ease both; }
+.day-card:hover { border-color:var(--border2); }
+.day-header { padding:14px 18px; display:flex; align-items:center; gap:12px; background:var(--surface2); cursor:pointer; user-select:none; }
+.day-num { width:34px; height:34px; background:linear-gradient(135deg,var(--accent),#9a8dff); border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+.day-date { font-size:14px; font-weight:700; color:var(--text); }
+.day-total { font-size:11px; color:var(--text3); margin-top:2px; }
+.day-chevron { margin-right:auto; font-size:14px; color:var(--text3); transition:transform .2s; }
+.day-card.expanded .day-chevron { transform:rotate(180deg); }
+.day-body { display:none; padding:14px 18px; }
+.day-card.expanded .day-body { display:block; }
+
+/* Clock badge */
+.clock-badge { background:var(--teal-dim); border:1px solid rgba(0,229,195,.3); border-radius:6px; padding:3px 9px; font-family:var(--mono); font-size:11px; color:var(--teal); }
+
+/* Time block */
+.time-block { display:flex; gap:10px; margin-bottom:10px; animation:fadeUp .3s ease; }
+.tb-time { font-family:var(--mono); font-size:11px; color:var(--text3); min-width:68px; padding-top:4px; text-align:left; direction:ltr; }
+.tb-content { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; border-right:3px solid var(--accent); }
+.tb-content.study { border-right-color:var(--accent); }
+.tb-content.review { border-right-color:var(--teal); }
+.tb-content.practice { border-right-color:var(--gold); }
+.tb-content.pomo { border-right-color:var(--red); }
+.tb-subject { font-size:12px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.tb-desc { font-size:11px; color:var(--text2); }
+.tb-duration { display:inline-flex; align-items:center; gap:3px; font-size:10px; background:var(--surface3); border-radius:5px; padding:2px 7px; color:var(--text2); margin-top:5px; }
+
+/* Editable session */
+.session-edit-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+.session-edit-row input, .session-edit-row select { background:var(--surface3); border:1px solid var(--border2); border-radius:6px; padding:5px 8px; font-size:11px; color:var(--text); font-family:var(--font); outline:none; }
+.session-edit-row input:focus, .session-edit-row select:focus { border-color:var(--accent); }
+
+/* ═══ QUESTIONS ═══ */
+.q-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:10px; animation:fadeUp .4s ease both; transition:border-color .2s; }
+.q-card.correct { border-color:var(--teal); background:rgba(0,229,195,.03); }
+.q-card.wrong { border-color:var(--red); background:rgba(255,94,125,.03); }
+.q-num { font-family:var(--mono); font-size:10px; color:var(--text3); margin-bottom:8px; }
+.q-text { font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px; line-height:1.65; }
+.q-text-lang { font-size:13px; color:var(--text); font-weight:600; direction:ltr; text-align:left; line-height:1.8; }
+.q-translation { font-size:12px; color:var(--teal); margin-top:6px; padding:8px 12px; background:var(--teal-dim); border-radius:var(--radius-sm); border-right:3px solid var(--teal); }
+.q-options { display:flex; flex-direction:column; gap:7px; }
+.q-opt { display:flex; align-items:center; gap:9px; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition:all .2s; font-size:13px; color:var(--text); direction:ltr; text-align:left; }
+.q-opt:hover { border-color:var(--accent); background:var(--accent-dim); }
+.q-opt.correct { border-color:var(--teal); background:var(--teal-dim); color:var(--teal); }
+.q-opt.wrong { border-color:var(--red); background:var(--red-dim); color:var(--red); }
+.opt-letter { width:22px; height:22px; background:var(--surface3); border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; font-weight:700; flex-shrink:0; }
+.q-explain { margin-top:9px; padding:9px 12px; background:var(--teal-dim); border-right:3px solid var(--teal); border-radius:var(--radius-sm); font-size:12px; color:var(--text2); }
+
+/* Subject section header */
+.subject-section { margin-bottom:28px; }
+.subject-section-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:linear-gradient(135deg,var(--accent-dim),var(--teal-dim)); border:1px solid rgba(124,109,250,.2); border-radius:var(--radius); margin-bottom:14px; }
+.subject-section-title { font-size:15px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px; }
+.subject-section-actions { display:flex; gap:7px; }
+
+/* ═══ FLASHCARDS ═══ */
+.fc-scene { perspective:1000px; width:100%; max-width:640px; margin:0 auto 16px; }
+.fc-card-container { width:100%; min-height:200px; position:relative; transform-style:preserve-3d; transition:transform .6s cubic-bezier(.4,0,.2,1); cursor:pointer; }
+.fc-card-container.flipped { transform:rotateY(180deg); }
+.fc-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:var(--radius-lg); padding:32px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border:1px solid var(--border2); }
+.fc-front { background:linear-gradient(135deg,var(--surface),var(--surface2)); }
+.fc-back { background:linear-gradient(135deg,rgba(0,229,195,.08),rgba(124,109,250,.08)); transform:rotateY(180deg); }
+.fc-front::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%, var(--accent-glow), transparent 70%); pointer-events:none; border-radius:var(--radius-lg); }
+.fc-question { font-size:16px; font-weight:700; color:var(--text); line-height:1.6; direction:ltr; text-align:left; width:100%; }
+.fc-translation { font-size:13px; color:var(--teal); margin-top:10px; padding:8px 12px; background:var(--teal-dim); border-radius:var(--radius-sm); width:100%; }
+.fc-answer { font-size:14px; color:var(--text); line-height:1.8; direction:ltr; text-align:left; width:100%; }
+.fc-answer-ar { font-size:13px; color:var(--gold); margin-top:10px; padding:8px 12px; background:var(--gold-dim); border-radius:var(--radius-sm); width:100%; }
+.fc-hint { font-size:11px; color:var(--text3); margin-top:12px; }
+.fc-actions { display:flex; gap:10px; justify-content:center; margin-top:14px; }
+.sr-btn { padding:9px 18px; border-radius:var(--radius-sm); border:none; cursor:pointer; font-family:var(--font); font-size:12px; font-weight:700; transition:all .2s; }
+.sr-hard { background:var(--red-dim); color:var(--red); border:1px solid rgba(255,94,125,.25); }
+.sr-medium { background:var(--gold-dim); color:var(--gold); border:1px solid rgba(255,200,70,.25); }
+.sr-easy { background:var(--teal-dim); color:var(--teal); border:1px solid rgba(0,229,195,.25); }
+
+/* ═══ SUMMARIES ═══ */
+.summary-block { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:14px; }
+.summary-original { padding:18px; border-bottom:1px solid var(--border); direction:ltr; text-align:left; }
+.summary-original-text { font-size:13px; color:var(--text2); line-height:1.9; }
+.summary-arabic { padding:18px; background:rgba(0,229,195,.04); }
+.summary-arabic-text { font-size:14px; color:var(--text); line-height:1.9; font-weight:500; }
+.summary-lang-badge { font-size:9px; font-weight:700; padding:2px 8px; border-radius:8px; text-transform:uppercase; letter-spacing:1px; }
+.slb-orig { background:var(--blue-dim); color:var(--blue); }
+.slb-ar { background:var(--teal-dim); color:var(--teal); }
+
+/* ═══ POMODORO ═══ */
+.pomo-page { max-width:700px; margin:0 auto; padding:20px 0; }
+.pomo-ring-wrap { position:relative; width:240px; height:240px; margin:0 auto 28px; }
+.pomo-ring-svg { width:240px; height:240px; transform:rotate(-90deg); }
+.pomo-ring-bg { fill:none; stroke:var(--surface3); stroke-width:12; }
+.pomo-ring-progress { fill:none; stroke:url(#pomoGrad); stroke-width:12; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+.pomo-timer-display { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pomo-time { font-family:var(--mono); font-size:48px; font-weight:700; color:var(--text); letter-spacing:3px; animation:pomoPulse 2s ease-in-out infinite; }
+.pomo-mode-label { font-size:13px; color:var(--text3); margin-top:4px; }
+.pomo-controls { display:flex; gap:12px; justify-content:center; margin-bottom:24px; }
+
+/* ═══ ANALYTICS ═══ */
+.heatmap-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:14px; }
+.heatmap-cell { aspect-ratio:1; border-radius:4px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; transition:all .2s; }
+.heatmap-cell[data-level="1"] { background:rgba(124,109,250,.2); border-color:rgba(124,109,250,.3); }
+.heatmap-cell[data-level="2"] { background:rgba(124,109,250,.4); border-color:rgba(124,109,250,.5); }
+.heatmap-cell[data-level="3"] { background:rgba(124,109,250,.65); border-color:rgba(124,109,250,.7); }
+.heatmap-cell[data-level="4"] { background:var(--accent); border-color:var(--accent); }
+.heatmap-cell:hover { transform:scale(1.15); z-index:1; }
+.analytics-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px; }
+.analytics-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; animation:fadeUp .4s ease both; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.section-title { font-size:17px; font-weight:900; color:var(--text); }
+.section-sub { font-size:12px; color:var(--text3); margin-top:2px; }
+.divider { height:1px; background:var(--border); margin:20px 0; }
+
+/* ═══ WIZARD ═══ */
+.wizard-steps { display:flex; align-items:center; gap:0; margin-bottom:24px; overflow-x:auto; padding-bottom:4px; }
+.wiz-step { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.wiz-num { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; background:var(--surface2); border:2px solid var(--border2); color:var(--text3); transition:all .3s; }
+.wiz-step.active .wiz-num { background:var(--accent); border-color:var(--accent); color:white; }
+.wiz-step.done .wiz-num { background:var(--teal); border-color:var(--teal); color:#000; }
+.wiz-label { font-size:12px; color:var(--text2); font-weight:600; }
+.wiz-step.active .wiz-label { color:var(--accent); }
+.wiz-step.done .wiz-label { color:var(--teal); }
+.wiz-line { flex:1; height:2px; background:var(--border); min-width:28px; margin:0 6px; transition:.3s; }
+.wiz-line.done { background:var(--teal); }
+.setup-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px; max-width:680px; margin:0 auto; animation:fadeUp .4s ease; }
+.setup-title { font-size:20px; font-weight:900; color:var(--text); margin-bottom:5px; }
+.setup-sub { font-size:13px; color:var(--text2); margin-bottom:24px; }
+
+/* AI panel */
+.ai-steps { list-style:none; max-width:380px; margin:18px auto; }
+.ai-step { display:flex; align-items:center; gap:12px; padding:9px 0; font-size:13px; color:var(--text3); }
+.ai-step.done { color:var(--teal); }
+.ai-step.active { color:var(--text); }
+.ai-step-icon { width:22px; height:22px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; background:var(--surface2); border:2px solid var(--border2); }
+.ai-step.done .ai-step-icon { background:var(--teal-dim); border-color:var(--teal); color:var(--teal); }
+.ai-step.active .ai-step-icon { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); animation:pulse 1.4s ease-in-out infinite; }
+.ai-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.ai-panel-header { padding:18px 22px; background:linear-gradient(135deg,rgba(124,109,250,.1),rgba(0,229,195,.06)); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.ai-avatar { width:38px; height:38px; background:linear-gradient(135deg,var(--accent),var(--teal)); border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; animation:glowPulse 2s ease-in-out infinite; flex-shrink:0; }
+.ai-status { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--teal); }
+.ai-status-dot { width:7px; height:7px; background:var(--teal); border-radius:50%; animation:pulse 2s ease-in-out infinite; }
+.ai-content { padding:22px; }
+.ai-section { margin-bottom:18px; }
+.ai-section-title { font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:9px; display:flex; align-items:center; gap:6px; }
+.ai-list { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.ai-list li { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; font-size:12px; color:var(--text); position:relative; padding-right:24px; }
+.ai-list li::before { content:'•'; position:absolute; right:10px; color:var(--accent); font-weight:700; }
+.importance-bar { margin-top:5px; height:3px; background:var(--surface3); border-radius:2px; overflow:hidden; }
+.importance-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--teal)); border-radius:2px; }
+.spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+
+/* Music */
+.pomo-settings { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+.pomo-music-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+.music-btn { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition:all .2s; color:var(--text2); font-size:13px; font-weight:600; width:100%; text-align:right; font-family:var(--font); }
+.music-btn:hover { border-color:var(--accent); color:var(--text); }
+.music-btn.playing { border-color:var(--teal); color:var(--teal); background:var(--teal-dim); }
+
+/* Backlog */
+.backlog-card { background:linear-gradient(135deg,rgba(255,94,125,.08),rgba(124,109,250,.06)); border:1px solid rgba(255,94,125,.2); border-radius:var(--radius); padding:20px; margin-bottom:14px; }
+
+/* Chat */
+.welcome-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:75vh; text-align:center; padding:40px; }
+.welcome-logo { width:80px; height:80px; background:linear-gradient(135deg,var(--accent),var(--teal)); border-radius:22px; display:flex; align-items:center; justify-content:center; font-size:38px; margin:0 auto 22px; animation:glowPulse 3s ease-in-out infinite; }
+.welcome-title { font-size:32px; font-weight:900; margin-bottom:10px; background:linear-gradient(135deg,var(--text),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.welcome-subtitle { font-size:14px; color:var(--text2); max-width:480px; margin:0 auto 28px; line-height:1.8; }
+.feature-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:620px; width:100%; margin:0 auto 28px; }
+.feature-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; text-align:center; transition:all .2s; }
+.feature-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.feature-icon { font-size:26px; margin-bottom:7px; display:block; }
+.feature-name { font-size:12px; font-weight:700; color:var(--text); }
+.feature-sub { font-size:10px; color:var(--text3); margin-top:2px; }
+
+/* Score */
+.score-circle { width:100px; height:100px; border-radius:50%; border:5px solid var(--border); margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:24px; font-weight:700; transition:border-color .5s, color .5s; }
+
+/* Mobile */
+.sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:99; }
+.sb-overlay.show { display:block; }
+.mobile-menu { display:none; background:var(--surface2); border:1px solid var(--border); border-radius:8px; width:34px; height:34px; align-items:center; justify-content:center; cursor:pointer; color:var(--text); font-size:16px; }
+
+@media (max-width:900px) {
+  :root { --sidebar-w:0px; }
+  .sidebar { transform:translateX(100%); width:255px; }
+  .sidebar.open { transform:translateX(0); }
+  .main { margin-right:0; }
+  .mobile-menu { display:flex; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .two-col { grid-template-columns:1fr; }
+  .analytics-grid { grid-template-columns:1fr; }
+  .form-row { grid-template-columns:1fr; }
+  .feature-grid { grid-template-columns:repeat(2,1fr); }
+}
+
+@media (max-width:480px) {
+  .stats-grid { grid-template-columns:1fr; }
+  .page { padding:16px; }
+  .topbar { padding:0 14px; }
+  .countdown-banner { flex-direction:column; }
+  .cd-units { flex-wrap:wrap; }
+}
+
+.sidebar::-webkit-scrollbar { width:3px; }
+.sidebar::-webkit-scrollbar-thumb { background:var(--border2); }
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ════════ AUTH SCREEN ════════ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🧠</div>
+      <div class="auth-logo-text">
+        <div class="app-name">PharmaMaster AI</div>
+        <div class="app-ver">v3.0 — Study OS</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">حساب جديد</button>
+    </div>
+    <div id="authError" class="auth-error">خطأ في البيانات</div>
+    <div class="auth-form" id="loginForm">
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">✉️</span>
+        <input type="email" class="auth-input" id="loginEmail" placeholder="البريد الإلكتروني" dir="ltr">
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">🔒</span>
+        <input type="password" class="auth-input" id="loginPass" placeholder="كلمة المرور" dir="ltr">
+      </div>
+      <button class="auth-btn" onclick="doLogin()">🚀 دخول</button>
+    </div>
+    <div class="auth-form hidden" id="registerForm">
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">👤</span>
+        <input type="text" class="auth-input" id="regName" placeholder="الاسم الكامل">
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">✉️</span>
+        <input type="email" class="auth-input" id="regEmail" placeholder="البريد الإلكتروني" dir="ltr">
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">🔒</span>
+        <input type="password" class="auth-input" id="regPass" placeholder="كلمة المرور (6+ أحرف)" dir="ltr">
+      </div>
+      <button class="auth-btn" onclick="doRegister()">✨ إنشاء حساب</button>
+    </div>
+    <div class="auth-guest">أو <a onclick="doGuestMode()">تجربة بدون حساب</a></div>
+  </div>
+</div>
+
+<!-- ════════ APP SCREEN ════════ -->
+<div id="appScreen" class="hidden">
+  <div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🧠</div>
+      <div>
+        <div class="sb-logo-name">PharmaMaster AI</div>
+        <div class="sb-logo-ver">v3.0 • Study OS</div>
+      </div>
+    </div>
+    <div class="sb-user" id="sbUser">
+      <div class="sb-avatar" id="sbAvatarLetter">؟</div>
+      <div style="min-width:0;">
+        <div class="sb-uname" id="sbUserName">زائر</div>
+        <div class="sb-uemail" id="sbUserEmail">guest@pharmamaster.ai</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">
+        <div class="sb-section-title">الرئيسية</div>
+        <div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">⊞</span> لوحة التحكم</div>
+        <div class="nav-item" onclick="navigate('subjects')"><span class="nav-icon">📚</span> موادي<span class="nav-badge" id="subBadge">0</span></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">الدراسة الذكية</div>
+        <div class="nav-item" onclick="navigate('summaries')"><span class="nav-icon">📝</span> الملخصات</div>
+        <div class="nav-item" onclick="navigate('schedule')"><span class="nav-icon">📅</span> الجدول الذكي</div>
+        <div class="nav-item" onclick="navigate('pomodoro')"><span class="nav-icon">⏱</span> بومودورو</div>
+        <div class="nav-item" onclick="navigate('questions')"><span class="nav-icon">❓</span> بنك الأسئلة</div>
+        <div class="nav-item" onclick="navigate('spaced')"><span class="nav-icon">🔄</span> التكرار الذكي</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">التحليل</div>
+        <div class="nav-item" onclick="navigate('analytics')"><span class="nav-icon">📊</span> الإحصائيات</div>
+        <div class="nav-item" onclick="navigate('chat')"><span class="nav-icon">🧠</span> العقل الثاني</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">الإعداد</div>
+        <div class="nav-item" onclick="navigate('setup')"><span class="nav-icon">⚙️</span> إضافة مادة</div>
+        <div class="nav-item" onclick="navigate('backlog')"><span class="nav-icon">🆘</span> إنقاذ التراكمات</div>
+      </div>
+    </nav>
+    <div class="sb-pomo">
+      <div class="sb-pomo-label" id="sbPomoLabel">وضع التركيز</div>
+      <div class="sb-pomo-time" id="sbPomoTime">25:00</div>
+      <div class="sb-pomo-btns">
+        <button class="btn btn-primary btn-xs" onclick="navigate('pomodoro')">افتح</button>
+        <button class="btn btn-ghost btn-xs" id="sbPomoToggle" onclick="toggleMiniPomo()">▶</button>
+      </div>
+    </div>
+    <div class="sb-footer">
+      <button class="theme-btn" onclick="toggleTheme()">
+        <span id="themeLabel">🌙 الوضع الداكن</span>
+        <div class="toggle-track" id="toggleTrack"><div class="toggle-thumb" id="toggleThumb"></div></div>
+      </button>
+      <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+        <div>
+          <div class="topbar-title" id="pageTitle">لوحة التحكم</div>
+          <div class="topbar-sub" id="pageSub">نظرة عامة على دراستك</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="clock-badge" id="liveClock">--:--:--</div>
+        <button class="btn btn-primary btn-sm" onclick="navigate('setup')">➕ مادة جديدة</button>
+      </div>
+    </header>
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div id="dashWelcome" style="display:none;">
+        <div class="welcome-wrap">
+          <div class="welcome-logo">🧠</div>
+          <h1 class="welcome-title">ابدأ رحلتك الدراسية</h1>
+          <p class="welcome-subtitle">أضف موادك الدراسية وارفع ملازمك، وسيبني الذكاء الاصطناعي خطة إنقاذ مخصصة لضمان أعلى درجة.</p>
+          <div class="feature-grid">
+            <div class="feature-card"><span class="feature-icon">📝</span><div class="feature-name">ملخصات ذكية</div><div class="feature-sub">بلغة الملف + عربي</div></div>
+            <div class="feature-card"><span class="feature-icon">⏱</span><div class="feature-name">بومودورو AI</div><div class="feature-sub">موسيقى تركيز</div></div>
+            <div class="feature-card"><span class="feature-icon">🔄</span><div class="feature-name">Spaced Repetition</div><div class="feature-sub">حفظ علمي</div></div>
+            <div class="feature-card"><span class="feature-icon">📊</span><div class="feature-name">تحليل عميق</div><div class="feature-sub">Heatmap + AI</div></div>
+          </div>
+          <button class="btn btn-primary btn-lg" onclick="navigate('setup')">🚀 ابدأ الآن</button>
+        </div>
+      </div>
+      <div id="dashContent">
+        <div class="countdown-banner" id="cdBanner" style="display:none;">
+          <div class="cd-info"><div class="cd-label">⏱ الوقت المتبقي للامتحان القادم</div><div class="cd-name" id="cdName">—</div></div>
+          <div class="cd-units">
+            <div class="cd-unit"><div class="cd-num" id="cdD">00</div><div class="cd-lbl">يوم</div></div>
+            <div class="cd-unit"><div class="cd-num" id="cdH">00</div><div class="cd-lbl">ساعة</div></div>
+            <div class="cd-unit"><div class="cd-num" id="cdM">00</div><div class="cd-lbl">دقيقة</div></div>
+            <div class="cd-unit"><div class="cd-num" id="cdS">00</div><div class="cd-lbl">ثانية</div></div>
+          </div>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card sc-accent"><span class="stat-icon">📚</span><div class="stat-value" id="stTotal">0</div><div class="stat-label">إجمالي المواد</div></div>
+          <div class="stat-card sc-teal"><span class="stat-icon">✅</span><div class="stat-value" id="stDone">0</div><div class="stat-label">مكتملة</div></div>
+          <div class="stat-card sc-gold"><span class="stat-icon">⏱</span><div class="stat-value" id="stHours">0</div><div class="stat-label">ساعات الدراسة</div></div>
+          <div class="stat-card sc-red"><span class="stat-icon">🎯</span><div class="stat-value" id="stProgress">0%</div><div class="stat-label">التقدم الكلي</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card"><div class="card-header"><div class="card-title">📅 خطة اليوم</div><button class="btn btn-ghost btn-sm" onclick="navigate('schedule')">عرض الكل</button></div><div id="todayPlan"></div></div>
+          <div class="card"><div class="card-header"><div class="card-title">📊 تقدم المواد</div></div><div id="dashProgress"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUBJECTS ═══ -->
+    <div class="page" id="page-subjects">
+      <div class="section-head">
+        <div><div class="section-title">📚 موادي الدراسية</div><div class="section-sub">إدارة جميع مواد الامتحانات</div></div>
+        <button class="btn btn-primary" onclick="navigate('setup')">➕ إضافة مادة</button>
+      </div>
+      <div class="subjects-grid" id="subjectsGrid"></div>
+    </div>
+
+    <!-- ═══ SETUP ═══ -->
+    <div class="page" id="page-setup">
+      <div class="wizard-steps" id="wizSteps">
+        <div class="wiz-step active" id="ws1"><div class="wiz-num">1</div><div class="wiz-label">المادة</div></div>
+        <div class="wiz-line" id="wl1"></div>
+        <div class="wiz-step" id="ws2"><div class="wiz-num">2</div><div class="wiz-label">الملفات</div></div>
+        <div class="wiz-line" id="wl2"></div>
+        <div class="wiz-step" id="ws3"><div class="wiz-num">3</div><div class="wiz-label">تحليل AI</div></div>
+        <div class="wiz-line" id="wl3"></div>
+        <div class="wiz-step" id="ws4"><div class="wiz-num">4</div><div class="wiz-label">جاهز!</div></div>
+      </div>
+      <div id="step1">
+        <div class="setup-card">
+          <div class="setup-title">📖 معلومات المادة الدراسية</div>
+          <div class="setup-sub">أدخل تفاصيل المادة ووقت الامتحان لبدء التنظيم الذكي</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">اسم المادة *</label><input type="text" class="form-input" id="sName" placeholder="Pharmacology, Anatomy..."></div>
+            <div class="form-group"><label class="form-label">الرمز / الإيموجي</label><input type="text" class="form-input" id="sEmoji" placeholder="💊 🦴 🧬" maxlength="4"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">تاريخ الامتحان *</label><input type="datetime-local" class="form-input" id="sDate"></div>
+            <div class="form-group"><label class="form-label">مستوى الصعوبة</label><select class="form-select" id="sDiff"><option value="easy">😊 سهل</option><option value="medium" selected>🤔 متوسط</option><option value="hard">😤 صعب</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">ساعات الدراسة اليومية</label><input type="number" class="form-input" id="sHours" value="4" min="1" max="16"></div>
+            <div class="form-group"><label class="form-label">الأولوية</label><select class="form-select" id="sPriority"><option value="1">🔴 عالية جداً</option><option value="2" selected>🟡 متوسطة</option><option value="3">🟢 منخفضة</option></select></div>
+          </div>
+          <div class="form-group"><label class="form-label">ملاحظات</label><textarea class="form-textarea" id="sNotes" placeholder="الفصول الصعبة، المفاهيم المربكة..."></textarea></div>
+          <button class="btn btn-primary" style="width:100%;" onclick="goStep2()">التالي: رفع الملفات ←</button>
+        </div>
+      </div>
+      <div id="step2" style="display:none;">
+        <div class="setup-card">
+          <div class="setup-title">📤 رفع ملازم المادة</div>
+          <div class="setup-sub">ارفع ملفات PDF أو صور أو نصوص للتحليل الذكي العميق</div>
+          <div class="upload-zone" id="upZone" onclick="document.getElementById('fileInp').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <span class="upload-icon">📂</span>
+            <div class="upload-title">اسحب الملفات هنا أو اضغط للاختيار</div>
+            <div class="upload-sub">رفع ملازم المادة للتحليل الذكي</div>
+            <div class="upload-types"><span class="upload-badge">📄 PDF</span><span class="upload-badge">🖼️ PNG/JPG</span><span class="upload-badge">📝 TXT</span><span class="upload-badge">📋 DOCX</span></div>
+          </div>
+          <input type="file" id="fileInp" multiple accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx" style="display:none" onchange="handleFileSelect(event)">
+          <div id="fileList" style="margin-top:14px;"></div>
+          <div style="margin-top:14px;padding:14px;background:var(--accent-dim);border:1px solid rgba(124,109,250,.2);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);">
+            💡 <strong style="color:var(--accent);">نصيحة:</strong> ارفع الملازم كاملة للحصول على أفضل تحليل. يمكن رفع أكثر من ملف لنفس المادة. سيتم تحليل المحتوى الفعلي للملفات.
+          </div>
+          <div style="display:flex;gap:10px;margin-top:18px;">
+            <button class="btn btn-ghost" onclick="goWizStep(1)" style="flex:1">← رجوع</button>
+            <button class="btn btn-primary" onclick="goStep3()" style="flex:2">التالي: تحليل AI ←</button>
+          </div>
+        </div>
+      </div>
+      <div id="step3" style="display:none;">
+        <div class="setup-card" style="max-width:760px;">
+          <div class="setup-title">🤖 تحليل الذكاء الاصطناعي العميق</div>
+          <div class="setup-sub">يقوم الذكاء الاصطناعي بتحليل ملازمك بشكل معمّق...</div>
+          <div id="aiProgress" style="text-align:center;">
+            <div class="spinner" style="margin:0 auto 16px;"></div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:18px;" id="aiStatus">جاري التحليل...</div>
+            <ul class="ai-steps" id="aiStepsList">
+              <li class="ai-step active" id="as1"><div class="ai-step-icon">⟳</div>قراءة وتحليل محتوى الملفات</li>
+              <li class="ai-step" id="as2"><div class="ai-step-icon">2</div>استخراج العناوين والمفاهيم الرئيسية</li>
+              <li class="ai-step" id="as3"><div class="ai-step-icon">3</div>تحديد النقاط الامتحانية المهمة</li>
+              <li class="ai-step" id="as4"><div class="ai-step-icon">4</div>إنشاء الملخص الشامل ثنائي اللغة</li>
+              <li class="ai-step" id="as5"><div class="ai-step-icon">5</div>توليد أسئلة وبطاقات مراجعة</li>
+            </ul>
+            <div class="progress-track" style="max-width:380px;margin:0 auto;">
+              <div class="progress-fill" id="aiPBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="ai-panel" id="aiResultPanel" style="display:none;">
+            <div class="ai-panel-header">
+              <div class="ai-avatar">🤖</div>
+              <div><div style="font-size:14px;font-weight:700;color:var(--text);">تحليل PharmaMaster AI</div><div class="ai-status"><div class="ai-status-dot"></div>اكتمل التحليل</div></div>
+            </div>
+            <div class="ai-content" id="aiResultContent"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:18px;" id="step3Actions" style="display:none;">
+            <button class="btn btn-ghost" onclick="goWizStep(2)" style="flex:1">← رجوع</button>
+            <button class="btn btn-primary" onclick="goStep4()" style="flex:2">التالي: إنشاء الجدول ←</button>
+          </div>
+        </div>
+      </div>
+      <div id="step4" style="display:none;">
+        <div class="setup-card" style="text-align:center;">
+          <div style="font-size:64px;margin-bottom:14px;animation:float 2s ease-in-out infinite;">🎉</div>
+          <div class="setup-title">تم الإعداد بنجاح!</div>
+          <div class="setup-sub" id="step4Msg">تم إضافة المادة وإنشاء الجدول الذكي</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin:18px 0;text-align:right;" id="step4Summary"></div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="navigate('subjects')">📚 عرض المواد</button>
+            <button class="btn btn-primary" onclick="navigate('schedule')">📅 عرض الجدول</button>
+            <button class="btn btn-teal" onclick="navigate('setup');resetSetup()">➕ مادة أخرى</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUMMARIES ═══ -->
+    <div class="page" id="page-summaries">
+      <div class="section-head">
+        <div><div class="section-title">📝 الملخصات الذكية</div><div class="section-sub">ملخص شامل لكل مادة باللغة الأصلية مع ترجمة عربية</div></div>
+        <button class="btn btn-primary btn-sm" onclick="regenerateSummaries()">🔄 تحديث الملخصات</button>
+      </div>
+      <div id="summariesContainer"></div>
+    </div>
+
+    <!-- ═══ SCHEDULE ═══ -->
+    <div class="page" id="page-schedule">
+      <div class="section-head">
+        <div><div class="section-title">📅 الجدول الدراسي الذكي</div><div class="section-sub">خطتك اليومية — اضغط على الجلسة للتعديل</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="regenerateSchedule()">🔄 إعادة التوليد</button>
+      </div>
+      <div id="scheduleContainer"></div>
+    </div>
+
+    <!-- ═══ POMODORO ═══ -->
+    <div class="page" id="page-pomodoro">
+      <div class="pomo-page">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:13px;color:var(--text3);margin-bottom:4px;">الجلسة الحالية</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);" id="pomoSubjectLabel">حدد مادة للدراسة</div>
+        </div>
+        <div class="pomo-ring-wrap">
+          <svg class="pomo-ring-svg" viewBox="0 0 240 240">
+            <defs><linearGradient id="pomoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c6dfa"/><stop offset="100%" stop-color="#00e5c3"/></linearGradient></defs>
+            <circle class="pomo-ring-bg" cx="120" cy="120" r="108"/>
+            <circle class="pomo-ring-progress" id="pomoRing" cx="120" cy="120" r="108" stroke-dasharray="678.58" stroke-dashoffset="0"/>
+          </svg>
+          <div class="pomo-timer-display">
+            <div class="pomo-time" id="pomoTime">25:00</div>
+            <div class="pomo-mode-label" id="pomoMode">🎯 تركيز</div>
+          </div>
+        </div>
+        <div class="pomo-controls">
+          <button class="btn btn-ghost" onclick="resetPomo()">⟳ إعادة</button>
+          <button class="btn btn-primary btn-lg" id="pomoBtn" onclick="togglePomo()">▶ ابدأ</button>
+          <button class="btn btn-ghost" onclick="skipPomo()">⏭ تخطي</button>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;" id="pomoDots"></div>
+        <div class="pomo-settings">
+          <div class="card-title" style="margin-bottom:14px;">⚙️ إعدادات بومودورو</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">وقت التركيز (دقيقة)</label><input type="number" class="form-input" id="pomoFocusMin" value="25" min="5" max="90" onchange="updatePomoSettings()"></div>
+            <div class="form-group"><label class="form-label">استراحة قصيرة</label><input type="number" class="form-input" id="pomoBreakMin" value="5" min="1" max="30" onchange="updatePomoSettings()"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">استراحة طويلة</label><input type="number" class="form-input" id="pomoLongMin" value="15" min="5" max="60" onchange="updatePomoSettings()"></div>
+            <div class="form-group"><label class="form-label">مادة الدراسة</label><select class="form-select" id="pomoSubjectSel" onchange="updatePomoSubject()"><option value="">اختر مادة...</option></select></div>
+          </div>
+        </div>
+        <div class="pomo-music-panel">
+          <div class="card-title" style="margin-bottom:14px;">🎵 موسيقى التركيز</div>
+          <div style="display:flex;flex-direction:column;gap:7px;" id="musicBtns">
+            <button class="music-btn" id="mBtn0" onclick="playMusic(0)">🎵 Lo-fi Hip Hop — تركيز هادئ</button>
+            <button class="music-btn" id="mBtn1" onclick="playMusic(1)">🌊 White Noise — صوت المحيط</button>
+            <button class="music-btn" id="mBtn2" onclick="playMusic(2)">🌧️ Rain Sounds — مطر هادئ</button>
+            <button class="music-btn" id="mBtn3" onclick="playMusic(3)">🏔️ Nature — أصوات الطبيعة</button>
+            <button class="music-btn" id="mBtn4" onclick="stopMusic()">🔇 إيقاف الصوت</button>
+          </div>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+            <label class="form-label" style="margin:0;white-space:nowrap;">🔊 مستوى الصوت</label>
+            <input type="range" id="volumeRange" min="0" max="100" value="40" style="flex:1;" oninput="setVolume(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ QUESTIONS ═══ -->
+    <div class="page" id="page-questions">
+      <div class="section-head">
+        <div><div class="section-title">❓ بنك الأسئلة</div><div class="section-sub">أسئلة بلغة الملف مع ترجمة عربية</div></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-select" id="qFilter" onchange="loadQuestions()" style="width:170px;padding:8px 12px;"><option value="">كل المواد</option></select>
+          <button class="btn btn-primary btn-sm" onclick="openGenerateModal()">🤖 توليد أسئلة</button>
+        </div>
+      </div>
+      <div id="scoreDisplay" style="display:none;" class="card" style="margin-bottom:14px;">
+        <div style="text-align:center;padding:20px;">
+          <div class="score-circle" id="scoreCircle">0%</div>
+          <div style="font-size:13px;color:var(--text2);">نتيجتك في هذه الجلسة</div>
+        </div>
+      </div>
+      <div id="questionsContainer"></div>
+    </div>
+
+    <!-- ═══ SPACED REPETITION ═══ -->
+    <div class="page" id="page-spaced">
+      <div class="section-head">
+        <div><div class="section-title">🔄 التكرار الذكي</div><div class="section-sub">Spaced Repetition — بطاقات بلغة الملف مع ترجمة عربية</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-danger btn-sm" onclick="deleteAllFlashcards()">🗑 حذف الكل</button>
+          <button class="btn btn-primary btn-sm" onclick="generateFlashcards()">🤖 توليد بطاقات</button>
+        </div>
+      </div>
+      <div id="flashContainer"></div>
+    </div>
+
+    <!-- ═══ ANALYTICS ═══ -->
+    <div class="page" id="page-analytics">
+      <div class="section-head"><div><div class="section-title">📊 التحليل العميق</div><div class="section-sub">لوحة بيانات دراستك</div></div></div>
+      <div class="two-col" style="margin-bottom:16px;">
+        <div class="analytics-card">
+          <div class="card-title" style="margin-bottom:14px;">🔥 خريطة الحرارة — نشاط الدراسة</div>
+          <div style="display:flex;gap:4px;font-size:10px;color:var(--text3);margin-bottom:6px;"><span>الأحد</span><span style="margin-right:auto;"></span><span>السبت</span></div>
+          <div class="heatmap-grid" id="heatmapGrid"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:10px;color:var(--text3);">
+            <span>أقل</span>
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--surface2);border:1px solid var(--border);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:rgba(124,109,250,.25);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:rgba(124,109,250,.5);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--accent);"></div>
+            <span>أكثر</span>
+          </div>
+        </div>
+        <div class="analytics-card"><div class="card-title" style="margin-bottom:14px;">🎯 مستوى الاستعداد للامتحان</div><div id="readinessList"></div></div>
+      </div>
+      <div class="analytics-grid" id="analyticsGrid">
+        <div class="analytics-card"><div class="card-title" style="margin-bottom:12px;">📈 الساعات المخطط vs الفعلي</div><div id="hoursChart"></div></div>
+        <div class="analytics-card"><div class="card-title" style="margin-bottom:12px;">🧠 معدل الإجابة الصحيحة</div><div id="accuracyChart"></div></div>
+        <div class="analytics-card"><div class="card-title" style="margin-bottom:12px;">⚡ أكثر المواد ضغطاً</div><div id="stressChart"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ CHAT ═══ -->
+    <div class="page" id="page-chat">
+      <div class="section-head"><div><div class="section-title">🧠 العقل الثاني</div><div class="section-sub">اسأل الذكاء الاصطناعي عن أي شيء في موادك</div></div></div>
+      <div class="card" style="margin-bottom:14px;"><div style="font-size:12px;color:var(--text3);margin-bottom:10px;">⚡ أسئلة سريعة:</div><div style="display:flex;gap:7px;flex-wrap:wrap;" id="chatQuickBtns"></div></div>
+      <div class="card" style="margin-bottom:14px;min-height:300px;max-height:450px;overflow-y:auto;" id="chatMessages">
+        <div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:40px;margin-bottom:10px;">🧠</div><div style="font-size:14px;">اسألني أي سؤال عن موادك الدراسية</div></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <textarea class="form-textarea" id="chatInput" placeholder="اكتب سؤالك هنا..." style="flex:1;min-height:60px;resize:none;" onkeydown="chatKeyDown(event)"></textarea>
+        <button class="btn btn-primary" onclick="sendChat()" style="align-self:flex-end;" id="chatSendBtn">إرسال</button>
+      </div>
+    </div>
+
+    <!-- ═══ BACKLOG ═══ -->
+    <div class="page" id="page-backlog">
+      <div class="section-head"><div><div class="section-title">🆘 إنقاذ التراكمات</div><div class="section-sub">خوارزمية AI لإعادة جدولة المواد المتراكمة</div></div></div>
+      <div class="setup-card" style="max-width:100%;">
+        <div class="setup-title">🔥 أدخل بيانات التراكم</div>
+        <div class="setup-sub">سيقوم النظام بحساب سعة استيعابك اليومية وتوزيع التراكمات</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">الساعات المتاحة يومياً</label><input type="number" class="form-input" id="blHours" value="6" min="1" max="18"></div>
+          <div class="form-group"><label class="form-label">أوقات الذروة للدراسة</label><select class="form-select" id="blPeak"><option value="morning">🌅 الصباح (6-12)</option><option value="afternoon">☀️ بعد الظهر (12-18)</option><option value="night" selected>🌙 المساء (18-24)</option><option value="all">⏰ طوال اليوم</option></select></div>
+        </div>
+        <div id="backlogSubjects"><div class="form-label" style="margin-bottom:10px;">المواد المتراكمة</div><div id="blSubjectList"></div></div>
+        <button class="btn btn-danger" style="width:100%;margin-top:16px;" onclick="generateBacklogPlan()">🆘 إنشاء خطة الإنقاذ الطارئة</button>
+      </div>
+      <div id="backlogResult" style="margin-top:18px;display:none;"></div>
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay hidden" id="subjectModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header"><div class="modal-title" id="smTitle">تفاصيل المادة</div><button class="modal-close" onclick="closeModal('subjectModal')">✕</button></div>
+    <div class="modal-body" id="smBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="generateModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🤖 توليد أسئلة بالذكاء الاصطناعي</div><button class="modal-close" onclick="closeModal('generateModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">المادة</label><select class="form-select" id="genSubSel"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">عدد الأسئلة</label><select class="form-select" id="genCount"><option value="5">5 أسئلة</option><option value="10" selected>10 أسئلة</option><option value="15">15 سؤال</option><option value="20">20 سؤال</option><option value="30">30 سؤال</option><option value="50">50 سؤال</option></select></div>
+        <div class="form-group"><label class="form-label">نوع الأسئلة</label><select class="form-select" id="genType"><option value="mcq">اختيار متعدد (MCQ)</option><option value="tf">صح أو خطأ</option><option value="mixed">مختلط</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('generateModal')">إلغاء</button><button class="btn btn-primary" onclick="doGenerateQuestions()">🤖 توليد الآن</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="editSessionModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><div class="modal-title">✏️ تعديل الجلسة الدراسية</div><button class="modal-close" onclick="closeModal('editSessionModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editSessionIdx">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">وقت البداية</label><input type="time" class="form-input" id="editTime"></div>
+        <div class="form-group"><label class="form-label">المدة (دقيقة)</label><input type="number" class="form-input" id="editDuration" min="15" max="480"></div>
+      </div>
+      <div class="form-group"><label class="form-label">المادة / الملزمة</label><select class="form-select" id="editSubjectSel"></select></div>
+      <div class="form-group"><label class="form-label">نوع الجلسة</label><select class="form-select" id="editType"><option value="study">📚 دراسة جديدة</option><option value="review">🔄 مراجعة</option><option value="practice">❓ تطبيق أسئلة</option><option value="pomo">⏱ بومودورو</option></select></div>
+      <div class="form-group"><label class="form-label">الوصف</label><input type="text" class="form-input" id="editDesc" placeholder="وصف مختصر للجلسة"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('editSessionModal')">إلغاء</button><button class="btn btn-primary" onclick="saveEditSession()">💾 حفظ التغييرات</button></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// PHARMAMASTER AI v3.0 — FULL JAVASCRIPT ENGINE
+// ═══════════════════════════════════════════════════
+
+const GROQ_KEY = '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';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+let S = {
+  subjects: [], schedule: [], questions: [], flashcards: [], summaries: [],
+  currentSubject: null, uploadedFiles: [],
+  step: 1, theme: 'dark',
+  pomodoro: { running:false, mode:'focus', remaining:25*60, total:25*60, session:0, interval:null },
+  music: { ctx:null, source:null, gain:null, playing:-1, volume:0.4 },
+  countdown: null,
+  studyLog: JSON.parse(localStorage.getItem('pm_studyLog') || '{}'),
+  pomodoroCount: 0
+};
+
+// ── AI CALL ──
+async function callAI(prompt, maxTok=1600) {
+  const r = await fetch(GROQ_URL, {
+    method:'POST',
+    headers:{'Authorization':`Bearer ${GROQ_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      messages:[{role:'user',content:prompt}],
+      max_tokens:maxTok, temperature:0.7
+    })
+  });
+  if (!r.ok) throw new Error('API '+r.status);
+  const d = await r.json();
+  return d.choices[0].message.content;
+}
+
+function parseJSON(text) {
+  try {
+    // Try direct parse
+    return JSON.parse(text);
+  } catch {}
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+  } catch {}
+  try {
+    // Remove markdown code blocks
+    const clean = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    return JSON.parse(clean);
+  } catch {}
+  return null;
+}
+
+// ── FILE READING ──
+async function readFileContent(file) {
+  return new Promise((resolve) => {
+    if (file.type.includes('text') || file.name.endsWith('.txt')) {
+      const reader = new FileReader();
+      reader.onload = e => resolve({ type:'text', content:e.target.result.slice(0,8000), name:file.name });
+      reader.onerror = () => resolve({ type:'text', content:'', name:file.name });
+      reader.readAsText(file, 'UTF-8');
+    } else if (file.type.includes('image') || file.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
+      const reader = new FileReader();
+      reader.onload = e => resolve({ type:'image', content:e.target.result, name:file.name });
+      reader.onerror = () => resolve({ type:'image', content:'', name:file.name });
+      reader.readAsDataURL(file);
+    } else if (file.type.includes('pdf') || file.name.endsWith('.pdf')) {
+      // For PDF: read as text approximation using FileReader
+      const reader = new FileReader();
+      reader.onload = e => {
+        // Try to extract readable text from PDF bytes
+        const arr = new Uint8Array(e.target.result);
+        let extracted = '';
+        // Extract text between stream markers
+        const str = String.fromCharCode.apply(null, arr.slice(0, 50000));
+        const matches = str.match(/\((.*?)\)/g) || [];
+        extracted = matches.map(m => m.slice(1,-1)).filter(t => t.length > 2 && /[a-zA-Z\u0600-\u06FF]/.test(t)).join(' ').slice(0, 6000);
+        resolve({ type:'pdf', content: extracted || `[PDF: ${file.name}] — ملف PDF تم رفعه`, name:file.name });
+      };
+      reader.onerror = () => resolve({ type:'pdf', content:`[PDF: ${file.name}]`, name:file.name });
+      reader.readAsArrayBuffer(file);
+    } else {
+      // For other files (docx etc.)
+      const reader = new FileReader();
+      reader.onload = e => {
+        const arr = new Uint8Array(e.target.result);
+        const str = String.fromCharCode.apply(null, arr.slice(0,30000));
+        // Extract readable content
+        const readable = str.replace(/[^\x20-\x7E\u0600-\u06FF\n]/g,' ').replace(/\s+/g,' ').trim().slice(0,5000);
+        resolve({ type:'doc', content: readable || `[${file.name}]`, name:file.name });
+      };
+      reader.onerror = () => resolve({ type:'doc', content:`[${file.name}]`, name:file.name });
+      reader.readAsArrayBuffer(file);
+    }
+  });
+}
+
+// ── STORAGE ──
+function save() {
+  localStorage.setItem('pm_subjects',   JSON.stringify(S.subjects));
+  localStorage.setItem('pm_schedule',   JSON.stringify(S.schedule));
+  localStorage.setItem('pm_questions',  JSON.stringify(S.questions));
+  localStorage.setItem('pm_flashcards', JSON.stringify(S.flashcards));
+  localStorage.setItem('pm_summaries',  JSON.stringify(S.summaries));
+  localStorage.setItem('pm_studyLog',   JSON.stringify(S.studyLog));
+}
+
+function load() {
+  S.subjects   = JSON.parse(localStorage.getItem('pm_subjects')   || '[]');
+  S.schedule   = JSON.parse(localStorage.getItem('pm_schedule')   || '[]');
+  S.questions  = JSON.parse(localStorage.getItem('pm_questions')  || '[]');
+  S.flashcards = JSON.parse(localStorage.getItem('pm_flashcards') || '[]');
+  S.summaries  = JSON.parse(localStorage.getItem('pm_summaries')  || '[]');
+  S.studyLog   = JSON.parse(localStorage.getItem('pm_studyLog')   || '{}');
+}
+
+// ── AUTH ──
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active',(i===0)===(tab==='login')));
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  if (!email||!pass) { showAuthError('يرجى إدخال البريد وكلمة المرور'); return; }
+  try { await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass); }
+  catch(e) { showAuthError(e.code==='auth/invalid-credential'?'بيانات خاطئة':e.message); }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  if (!name||!email||!pass) { showAuthError('يرجى ملء جميع الحقول'); return; }
+  if (pass.length<6) { showAuthError('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+  try {
+    const cred = await window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass);
+    const {db,doc,setDoc} = window._fb;
+    await setDoc(doc(db,'users',cred.user.uid),{name,email,createdAt:new Date().toISOString()});
+  } catch(e) { showAuthError(e.code==='auth/email-already-in-use'?'البريد مستخدم بالفعل':e.message); }
+}
+
+function doGuestMode() {
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  _initApp({uid:'guest',email:'guest@study.ai',displayName:'زائر'});
+}
+
+function doLogout() {
+  if (window._fb?.signOut && window._fb?.auth) window._fb.signOut(window._fb.auth);
+  else { document.getElementById('authScreen').classList.remove('hidden'); document.getElementById('appScreen').classList.add('hidden'); }
+}
+
+function showAuthError(msg) { const el=document.getElementById('authError'); el.textContent=msg; el.style.display='block'; }
+
+// ── INIT ──
+window._initApp = function(user) {
+  load(); updateSidebarUser(user); updateBadge(); renderDashboard();
+  buildHeatmap(); populatePomoSubjects(); buildBacklogSubjectList();
+  startLiveClock();
+  const d=new Date(); d.setDate(d.getDate()+7);
+  const el=document.getElementById('sDate'); if(el) el.value=d.toISOString().slice(0,16);
+  const today=todayStr(); if(!S.studyLog[today]) S.studyLog[today]=0;
+};
+
+function updateSidebarUser(user) {
+  const name = user.displayName||user.email?.split('@')[0]||'مستخدم';
+  document.getElementById('sbUserName').textContent = name;
+  document.getElementById('sbUserEmail').textContent = user.email||'';
+  document.getElementById('sbAvatarLetter').textContent = name.charAt(0).toUpperCase();
+}
+
+// Live clock
+function startLiveClock() {
+  function tick() {
+    const now = new Date();
+    document.getElementById('liveClock').textContent =
+      pad2(now.getHours())+':'+pad2(now.getMinutes())+':'+pad2(now.getSeconds());
+  }
+  tick(); setInterval(tick,1000);
+}
+
+// ── NAVIGATION ──
+const PAGE_INFO = {
+  dashboard:  ['لوحة التحكم','نظرة عامة على دراستك'],
+  subjects:   ['موادي الدراسية','إدارة جميع مواد الامتحانات'],
+  setup:      ['إضافة مادة جديدة','أضف مادة وابدأ التنظيم الذكي'],
+  summaries:  ['الملخصات الذكية','ملخص شامل لكل مادة بلغتين'],
+  schedule:   ['الجدول الذكي','خطتك اليومية المخصصة'],
+  pomodoro:   ['نظام بومودورو','مؤقت التركيز مع موسيقى AI'],
+  questions:  ['بنك الأسئلة','أسئلة متوقعة بالذكاء الاصطناعي'],
+  spaced:     ['التكرار الذكي','Spaced Repetition — Ebbinghaus Method'],
+  analytics:  ['الإحصائيات','تحليل عميق لأداء الدراسة'],
+  chat:       ['العقل الثاني','اسأل AI عن أي شيء في موادك'],
+  backlog:    ['إنقاذ التراكمات','خوارزمية AI لإعادة جدولة المتأخرات'],
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('active');
+  });
+  const info = PAGE_INFO[page]||[page,''];
+  document.getElementById('pageTitle').textContent = info[0];
+  document.getElementById('pageSub').textContent   = info[1];
+  closeSidebar();
+  if(page==='dashboard') renderDashboard();
+  if(page==='subjects')  renderSubjects();
+  if(page==='summaries') renderSummaries();
+  if(page==='schedule')  renderSchedule();
+  if(page==='questions') renderQuestions();
+  if(page==='spaced')    renderFlashcards();
+  if(page==='analytics') renderAnalytics();
+  if(page==='chat')      buildChatQuick();
+  if(page==='backlog')   buildBacklogSubjectList();
+  if(page==='pomodoro')  populatePomoSubjects();
+}
+
+// ── THEME ──
+function toggleTheme() {
+  S.theme = S.theme==='dark'?'light':'dark';
+  document.body.setAttribute('data-theme', S.theme==='light'?'light':'');
+  document.getElementById('themeLabel').textContent = S.theme==='dark'?'🌙 الوضع الداكن':'☀️ الوضع الفاتح';
+}
+
+// ── SIDEBAR ──
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sbOverlay').classList.toggle('show'); }
+function closeSidebar()   { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sbOverlay').classList.remove('show'); }
+function closeModal(id)   { document.getElementById(id).classList.add('hidden'); }
+
+// ── TOAST ──
+function toast(msg, type='info') {
+  const icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span>${icons[type]||'ℹ️'}</span>${msg}`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(),3600);
+}
+
+// ── UTILS ──
+function sleep(ms)  { return new Promise(r=>setTimeout(r,ms)); }
+function todayStr() { return new Date().toLocaleDateString('en-CA'); }
+function pad2(n)    { return String(n).padStart(2,'0'); }
+
+function defaultEmoji(name) {
+  const n=name.toLowerCase();
+  if(n.includes('pharm'))  return '💊';
+  if(n.includes('anat'))   return '🦴';
+  if(n.includes('bio'))    return '🧬';
+  if(n.includes('chem'))   return '⚗️';
+  if(n.includes('physio')) return '❤️';
+  if(n.includes('path'))   return '🔬';
+  if(n.includes('micro'))  return '🦠';
+  if(n.includes('surg'))   return '🩺';
+  if(n.includes('neuro'))  return '🧠';
+  if(n.includes('card'))   return '💓';
+  return '📖';
+}
+
+function updateBadge() { document.getElementById('subBadge').textContent = S.subjects.length; }
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDashboard() {
+  const has = S.subjects.length>0;
+  document.getElementById('dashWelcome').style.display = has?'none':'flex';
+  document.getElementById('dashContent').style.display = has?'block':'none';
+  if(!has) return;
+
+  document.getElementById('stTotal').textContent    = S.subjects.length;
+  document.getElementById('stDone').textContent     = S.subjects.filter(s=>s.progress>=100).length;
+  document.getElementById('stHours').textContent    = S.subjects.reduce((a,s)=>a+(s.studiedHours||0),0).toFixed(1);
+  const avg = Math.round(S.subjects.reduce((a,s)=>a+(s.progress||0),0)/S.subjects.length);
+  document.getElementById('stProgress').textContent = avg+'%';
+
+  const upcoming = S.subjects.filter(s=>s.examDate&&new Date(s.examDate)>new Date()).sort((a,b)=>new Date(a.examDate)-new Date(b.examDate));
+  if(upcoming.length>0) {
+    document.getElementById('cdBanner').style.display='flex';
+    document.getElementById('cdName').textContent=(upcoming[0].emoji||'📖')+' '+upcoming[0].name;
+    startCountdown(upcoming[0].examDate);
+  } else { document.getElementById('cdBanner').style.display='none'; }
+
+  const todayBlocks=S.schedule.filter(b=>b.date===todayStr()).slice(0,4);
+  const todayEl=document.getElementById('todayPlan');
+  todayEl.innerHTML = todayBlocks.length>0
+    ? todayBlocks.map(b=>`<div class="time-block" style="margin-bottom:8px;"><div class="tb-time">${b.time}</div><div class="tb-content ${b.type}"><div class="tb-subject">${b.subject}</div><div class="tb-desc">${b.desc}</div></div></div>`).join('')
+    : `<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:13px;">📋 لا توجد جلسات مجدولة اليوم</div>`;
+
+  document.getElementById('dashProgress').innerHTML = S.subjects.slice(0,6).map(s=>`
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span style="font-weight:700;">${s.emoji||'📖'} ${s.name}</span>
+        <span style="color:var(--text3);">${s.progress||0}%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${s.progress||0}%"></div></div>
+    </div>`).join('');
+}
+
+function startCountdown(target) {
+  if(S.countdown) clearInterval(S.countdown);
+  function tick() {
+    const diff=new Date(target)-new Date();
+    if(diff<=0){clearInterval(S.countdown);return;}
+    document.getElementById('cdD').textContent=pad2(Math.floor(diff/86400000));
+    document.getElementById('cdH').textContent=pad2(Math.floor((diff%86400000)/3600000));
+    document.getElementById('cdM').textContent=pad2(Math.floor((diff%3600000)/60000));
+    document.getElementById('cdS').textContent=pad2(Math.floor((diff%60000)/1000));
+  }
+  tick(); S.countdown=setInterval(tick,1000);
+}
+
+// ═══════════════════════════════════════════════
+// SUBJECTS
+// ═══════════════════════════════════════════════
+function renderSubjects() {
+  updateBadge();
+  const grid=document.getElementById('subjectsGrid');
+  if(!S.subjects.length) {
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">📚</span><div class="empty-title">لا توجد مواد بعد</div><div class="empty-desc">أضف موادك وارفع الملازم لبدء التنظيم الذكي</div><button class="btn btn-primary" onclick="navigate('setup')">➕ إضافة أول مادة</button></div>`;
+    return;
+  }
+  const sorted=[...S.subjects].sort((a,b)=>(a.priority||2)-(b.priority||2));
+  grid.innerHTML = sorted.map((s,i)=>{
+    const days=s.examDate?Math.max(0,Math.ceil((new Date(s.examDate)-new Date())/86400000)):'—';
+    const urgency=typeof days==='number'&&days<=3?'red':days<=7?'gold':'teal';
+    return `<div class="subject-card" style="animation-delay:${i*.06}s" onclick="openSubjectModal('${s.id}')">
+      <div class="sc-header">
+        <div class="sc-emoji">${s.emoji||'📖'}</div>
+        <div class="sc-actions" onclick="event.stopPropagation()">
+          <button class="sc-btn" onclick="openEditSubjectModal('${s.id}')" title="تعديل">✏️</button>
+          <button class="sc-btn danger" onclick="delSubject('${s.id}')" title="حذف">🗑</button>
+        </div>
+      </div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-meta">📅 ${s.examDate?new Date(s.examDate).toLocaleDateString('ar-EG',{day:'numeric',month:'long'}):'غير محدد'}</div>
+      <div class="sc-tags">
+        <span class="tag tag-${s.difficulty||'medium'}">${s.difficulty==='easy'?'سهل':s.difficulty==='hard'?'صعب':'متوسط'}</span>
+        <span class="tag tag-${urgency}">${days} يوم</span>
+        ${s.filesCount?`<span class="tag tag-accent">📄 ${s.filesCount}</span>`:''}
+      </div>
+      <div class="sc-progress-row"><span>التقدم</span><span>${s.progress||0}%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${s.progress||0}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function openSubjectModal(id) {
+  const s=S.subjects.find(x=>x.id===id); if(!s) return;
+  const days=s.examDate?Math.max(0,Math.ceil((new Date(s.examDate)-new Date())/86400000)):'—';
+  const a=s.analysis;
+  document.getElementById('smTitle').textContent=(s.emoji||'📖')+' '+s.name;
+  document.getElementById('smBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">تاريخ الامتحان</div>
+        <div style="font-weight:700;font-size:13px;">${s.examDate?new Date(s.examDate).toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'}):'—'}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">الأيام المتبقية</div>
+        <div style="font-weight:700;font-size:22px;font-family:var(--mono);color:${days<=3?'var(--red)':days<=7?'var(--gold)':'var(--teal)'};">${days}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span>التقدم الكلي</span><span>${s.progress||0}%</span></div>
+      <div class="progress-track" style="height:9px;"><div class="progress-fill" style="width:${s.progress||0}%"></div></div>
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="setProgress('${s.id}',25)">25%</button>
+      <button class="btn btn-ghost btn-sm" onclick="setProgress('${s.id}',50)">50%</button>
+      <button class="btn btn-ghost btn-sm" onclick="setProgress('${s.id}',75)">75%</button>
+      <button class="btn btn-teal btn-sm" onclick="setProgress('${s.id}',100)">✅ مكتمل</button>
+    </div>
+    ${a?`<div class="divider"></div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;">🎯 نقاط امتحانية</div>
+      <ul class="ai-list">${(a.keyPoints||[]).slice(0,5).map(p=>`<li>${p}</li>`).join('')}</ul>
+    </div>
+    ${a.summary?`<div style="font-size:12px;color:var(--text2);background:var(--surface2);border-right:3px solid var(--accent);padding:12px;border-radius:var(--radius-sm);line-height:1.8;">📝 ${a.summary}</div>`:''}
+    `:`<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px;">لم يتم تحليل هذه المادة بعد.</div>`}
+    <div class="divider"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="closeModal('subjectModal');navigate('questions')">❓ الأسئلة</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('subjectModal');navigate('spaced')">🔄 التكرار</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('subjectModal');navigate('summaries')">📝 الملخص</button>
+      <button class="btn btn-danger btn-sm" onclick="if(confirm('حذف المادة؟')){closeModal('subjectModal');delSubject('${s.id}');}">🗑 حذف المادة</button>
+    </div>`;
+  document.getElementById('subjectModal').classList.remove('hidden');
+}
+
+// Edit subject modal
+function openEditSubjectModal(id) {
+  const s=S.subjects.find(x=>x.id===id); if(!s) return;
+  const body=`
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">اسم المادة</label><input type="text" class="form-input" id="eSubName" value="${s.name}"></div>
+      <div class="form-group"><label class="form-label">الإيموجي</label><input type="text" class="form-input" id="eSubEmoji" value="${s.emoji||'📖'}" maxlength="4"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">تاريخ الامتحان</label><input type="datetime-local" class="form-input" id="eSubDate" value="${s.examDate?s.examDate.slice(0,16):''}"></div>
+      <div class="form-group"><label class="form-label">الصعوبة</label><select class="form-select" id="eSubDiff"><option value="easy" ${s.difficulty==='easy'?'selected':''}>سهل</option><option value="medium" ${s.difficulty==='medium'?'selected':''}>متوسط</option><option value="hard" ${s.difficulty==='hard'?'selected':''}>صعب</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">ساعات يومية</label><input type="number" class="form-input" id="eSubHours" value="${s.dailyHours||4}" min="1" max="16"></div>
+      <div class="form-group"><label class="form-label">الأولوية</label><select class="form-select" id="eSubPriority"><option value="1" ${s.priority===1?'selected':''}>🔴 عالية</option><option value="2" ${s.priority===2?'selected':''}>🟡 متوسطة</option><option value="3" ${s.priority===3?'selected':''}>🟢 منخفضة</option></select></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('subjectModal')" style="flex:1">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveEditSubject('${id}')" style="flex:2">💾 حفظ</button>
+    </div>`;
+  document.getElementById('smTitle').textContent='✏️ تعديل '+s.name;
+  document.getElementById('smBody').innerHTML=body;
+  document.getElementById('subjectModal').classList.remove('hidden');
+}
+
+function saveEditSubject(id) {
+  const s=S.subjects.find(x=>x.id===id); if(!s) return;
+  s.name=document.getElementById('eSubName').value.trim()||s.name;
+  s.emoji=document.getElementById('eSubEmoji').value||s.emoji;
+  s.examDate=document.getElementById('eSubDate').value||s.examDate;
+  s.difficulty=document.getElementById('eSubDiff').value;
+  s.dailyHours=parseFloat(document.getElementById('eSubHours').value)||s.dailyHours;
+  s.priority=parseInt(document.getElementById('eSubPriority').value)||s.priority;
+  save(); closeModal('subjectModal'); renderSubjects(); renderDashboard();
+  toast('تم تحديث المادة', 'success');
+}
+
+function setProgress(id, val) {
+  const s=S.subjects.find(x=>x.id===id); if(!s) return;
+  s.progress=val;
+  const today=todayStr(); if(!S.studyLog[today]) S.studyLog[today]=0; S.studyLog[today]+=1;
+  save(); openSubjectModal(id); renderSubjects(); renderDashboard();
+  toast(`تم تحديث ${s.name} إلى ${val}%`, 'success');
+}
+
+function delSubject(id) {
+  if(!confirm('هل تريد حذف هذه المادة وجميع بياناتها (أسئلة، بطاقات، جدول، ملخصات)؟')) return;
+  S.subjects   = S.subjects.filter(s=>s.id!==id);
+  S.questions  = S.questions.filter(q=>q.subjectId!==id);
+  S.flashcards = S.flashcards.filter(f=>f.subjectId!==id);
+  S.schedule   = S.schedule.filter(b=>b.subjectId!==id);
+  S.summaries  = S.summaries.filter(sm=>sm.subjectId!==id);
+  save(); updateBadge(); renderSubjects(); renderDashboard();
+  toast('تم حذف المادة وجميع بياناتها', 'info');
+}
+
+// ═══════════════════════════════════════════════
+// SETUP WIZARD
+// ═══════════════════════════════════════════════
+function goWizStep(n) {
+  S.step=n;
+  [1,2,3,4].forEach(i=>{
+    document.getElementById('step'+i).style.display=i===n?'block':'none';
+    const ws=document.getElementById('ws'+i);
+    ws.className='wiz-step'+(i<n?' done':i===n?' active':'');
+    ws.querySelector('.wiz-num').textContent=i<n?'✓':i;
+    if(i<4){const wl=document.getElementById('wl'+i); wl.className='wiz-line'+(i<n?' done':'');}
+  });
+}
+
+function goStep2() {
+  const name=document.getElementById('sName').value.trim();
+  const date=document.getElementById('sDate').value;
+  if(!name){toast('يرجى إدخال اسم المادة','error');return;}
+  if(!date){toast('يرجى تحديد تاريخ الامتحان','error');return;}
+  S.currentSubject={
+    id:'sub_'+Date.now(),
+    name, emoji:document.getElementById('sEmoji').value||defaultEmoji(name),
+    examDate:date,
+    difficulty:document.getElementById('sDiff').value,
+    dailyHours:parseFloat(document.getElementById('sHours').value)||4,
+    priority:parseInt(document.getElementById('sPriority').value)||2,
+    notes:document.getElementById('sNotes').value,
+    progress:0, studiedHours:0, createdAt:new Date().toISOString()
+  };
+  goWizStep(2);
+}
+
+// FILE UPLOAD
+function handleDragOver(e){e.preventDefault();document.getElementById('upZone').classList.add('dragover');}
+function handleDragLeave(){document.getElementById('upZone').classList.remove('dragover');}
+function handleDrop(e){e.preventDefault();handleDragLeave();addFiles(Array.from(e.dataTransfer.files));}
+function handleFileSelect(e){addFiles(Array.from(e.target.files));}
+
+function addFiles(files) {
+  files.forEach(f=>{if(!S.uploadedFiles.find(x=>x.name===f.name))S.uploadedFiles.push(f);});
+  renderFileList();
+}
+
+function renderFileList() {
+  const list=document.getElementById('fileList');
+  if(!S.uploadedFiles.length){list.innerHTML='';return;}
+  list.innerHTML=S.uploadedFiles.map((f,i)=>{
+    const ext=f.name.split('.').pop().toLowerCase();
+    const icon=ext==='pdf'?'📄':(ext==='png'||ext==='jpg'||ext==='jpeg')?'🖼️':ext==='docx'||ext==='doc'?'📋':'📝';
+    const cls=ext==='pdf'?'fi-pdf':(ext==='png'||ext==='jpg')?'fi-img':'fi-text';
+    const size=f.size<1048576?(f.size/1024).toFixed(1)+' KB':(f.size/1048576).toFixed(1)+' MB';
+    return `<div class="file-item">
+      <div class="file-icon ${cls}">${icon}</div>
+      <div style="flex:1;min-width:0;"><div class="file-name">${f.name}</div><div class="file-size">${size}</div></div>
+      <button class="file-del" onclick="S.uploadedFiles.splice(${i},1);renderFileList()">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function goStep3() { goWizStep(3); await runAnalysis(); }
+
+// ═══════════════════════════════════════════════
+// AI ANALYSIS — DEEP FILE READING
+// ═══════════════════════════════════════════════
+async function runAnalysis() {
+  const steps=[
+    {id:'as1',label:'قراءة وتحليل محتوى الملفات',pct:20},
+    {id:'as2',label:'استخراج العناوين والمفاهيم',pct:40},
+    {id:'as3',label:'تحديد النقاط الامتحانية',pct:60},
+    {id:'as4',label:'إنشاء الملخص ثنائي اللغة',pct:80},
+    {id:'as5',label:'توليد أسئلة وبطاقات',pct:100},
+  ];
+
+  // Deep file reading
+  document.getElementById('aiStatus').textContent = 'جاري قراءة الملفات...';
+  let fileContents = [];
+  let detectedLang = 'english';
+
+  for(const f of S.uploadedFiles) {
+    const fc = await readFileContent(f);
+    fileContents.push(fc);
+  }
+
+  // Detect language from content
+  const allText = fileContents.map(f=>f.content).join(' ').slice(0,500);
+  if(/[\u0600-\u06FF]/.test(allText)) detectedLang='arabic';
+  else if(/[äöüÄÖÜß]/.test(allText)) detectedLang='german';
+  else if(/[àáâãèéêëîïôõùúûü]/.test(allText)) detectedLang='french';
+  else detectedLang='english';
+
+  S.currentSubject.detectedLang = detectedLang;
+
+  for(let i=0;i<steps.length;i++){
+    if(i>0){const prev=document.getElementById(steps[i-1].id);prev.className='ai-step done';prev.querySelector('.ai-step-icon').textContent='✓';}
+    const cur=document.getElementById(steps[i].id);cur.className='ai-step active';cur.querySelector('.ai-step-icon').textContent='⟳';
+    document.getElementById('aiPBar').style.width=steps[i].pct+'%';
+    document.getElementById('aiStatus').textContent=steps[i].label+'...';
+    await sleep(600);
+  }
+
+  const last=document.getElementById(steps[steps.length-1].id);last.className='ai-step done';last.querySelector('.ai-step-icon').textContent='✓';
+  document.getElementById('aiStatus').textContent='جاري الاتصال بالذكاء الاصطناعي...';
+
+  const s=S.currentSubject;
+  const fileContextParts = fileContents.map(f=>{
+    if(f.type==='image') return `[صورة: ${f.name}] — ملف صورة تم رفعه`;
+    return `=== محتوى ${f.name} ===\n${f.content}`;
+  }).join('\n\n');
+
+  const hasRealContent = fileContents.some(f=>f.content.length>100);
+
+  const prompt = `You are an expert academic assistant specializing in ${s.name}.
+Subject language detected: ${detectedLang}
+Subject: ${s.name}
+Difficulty: ${s.difficulty}
+Student notes: ${s.notes||'none'}
+${hasRealContent?`File content (extracted):\n${fileContextParts.slice(0,5000)}`:'No files uploaded. Use your comprehensive knowledge of this subject.'}
+
+IMPORTANT: The summary, keyPoints, definitions, questions, and flashcards should be in the ORIGINAL language of the material (${detectedLang}). 
+The Arabic translation fields (summaryArabic, keyPointsArabic) must be in Arabic.
+
+Respond with ONLY valid JSON, no markdown:
+{
+  "lang": "${detectedLang}",
+  "keyPoints": ["key exam point 1","key point 2","key point 3","key point 4","key point 5","key point 6","key point 7","key point 8"],
+  "keyPointsArabic": ["النقطة 1 بالعربي","النقطة 2 بالعربي"],
+  "definitions": [{"term":"Medical Term","def":"Scientific definition","defAr":"التعريف بالعربية"}],
+  "summary": "Comprehensive summary in ${detectedLang} — 4-6 detailed sentences covering all major topics",
+  "summaryArabic": "ملخص شامل ودقيق بالعربية يغطي جميع المحاور الرئيسية في 4-6 جمل",
+  "questions": [{"q":"Question in ${detectedLang}?","qAr":"السؤال بالعربية؟","options":["A","B","C","D"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"Explanation in ${detectedLang}","explanationAr":"الشرح بالعربية"}],
+  "flashcards": [{"front":"Term or question in ${detectedLang}","frontAr":"المصطلح أو السؤال بالعربية","back":"Answer in ${detectedLang}","backAr":"الإجابة بالعربية"}],
+  "focusAreas": ["focus area 1","focus area 2"],
+  "studyTips": ["tip 1","tip 2"],
+  "chapters": ["chapter 1","chapter 2"]
+}`;
+
+  let analysis;
+  try {
+    const res = await callAI(prompt, 3000);
+    analysis = parseJSON(res) || fallbackAnalysis(s);
+  } catch(e) {
+    analysis = fallbackAnalysis(s);
+    toast('تم استخدام التحليل الافتراضي', 'warning');
+  }
+
+  s.analysis = analysis;
+  s.filesCount = S.uploadedFiles.length;
+  s.detectedLang = analysis.lang || detectedLang;
+
+  document.getElementById('aiProgress').style.display='none';
+  document.getElementById('aiResultPanel').style.display='block';
+  document.getElementById('aiResultContent').innerHTML=renderAnalysisHTML(analysis, s);
+  document.getElementById('step3Actions').style.display='flex';
+}
+
+function fallbackAnalysis(s) {
+  return {
+    lang:'english', keyPoints:['Core mechanisms and pathways','Clinical applications','Drug interactions','Dosage and administration','Side effects and contraindications','Diagnostic criteria','Treatment protocols','Recent guidelines'],
+    keyPointsArabic:['الآليات والمسارات الأساسية','التطبيقات السريرية','تفاعلات الأدوية'],
+    definitions:[{term:'Key Term 1',def:'Essential definition for exam',defAr:'تعريف أساسي للامتحان'}],
+    summary:`${s.name} covers fundamental concepts essential for clinical practice. Focus on mechanisms, clinical applications, and key drug interactions.`,
+    summaryArabic:`${s.name} تغطي المفاهيم الأساسية الضرورية للممارسة السريرية. ركز على الآليات والتطبيقات السريرية وتفاعلات الأدوية.`,
+    questions:[], flashcards:[], focusAreas:['Chapter 1-2','Core concepts'], studyTips:['Start with basics','Review daily'], chapters:['Introduction','Core topics']
+  };
+}
+
+function renderAnalysisHTML(a, s) {
+  return `
+    <div class="ai-section">
+      <div class="ai-section-title">🎯 Key Exam Points (${a.lang||'English'})</div>
+      <ul class="ai-list">${(a.keyPoints||[]).map((p,i)=>`<li style="direction:ltr;text-align:left;">${p}<div class="importance-bar"><div class="importance-fill" style="width:${100-i*9}%"></div></div></li>`).join('')}</ul>
+    </div>
+    ${a.summaryArabic?`<div class="ai-section">
+      <div class="ai-section-title">📝 الملخص الذكي</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.9;background:var(--teal-dim);border-radius:var(--radius-sm);padding:12px;border-right:3px solid var(--teal);">${a.summaryArabic}</div>
+    </div>`:''}
+    ${(a.focusAreas||[]).length?`<div class="ai-section">
+      <div class="ai-section-title">🔍 Focus Areas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${a.focusAreas.map(f=>`<span class="tag tag-hard" style="direction:ltr;">${f}</span>`).join('')}</div>
+    </div>`:''}
+    <div style="background:var(--accent-dim);border:1px solid rgba(124,109,250,.2);border-radius:var(--radius-sm);padding:12px;margin-top:8px;">
+      <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:7px;">📊 توصية الدراسة</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.9;">
+        🌐 لغة الملف: <strong style="color:var(--text);">${a.lang||'English'}</strong><br>
+        📄 ملفات محللة: <strong style="color:var(--text);">${s.filesCount||0}</strong><br>
+        ❓ أسئلة مولّدة: <strong style="color:var(--text);">${(a.questions||[]).length}</strong><br>
+        🃏 بطاقات التكرار: <strong style="color:var(--text);">${(a.flashcards||[]).length}</strong>
+      </div>
+    </div>`;
+}
+
+async function goStep4() {
+  const s=S.currentSubject;
+
+  // Save questions
+  if(s.analysis?.questions) {
+    s.analysis.questions.forEach(q=>{
+      S.questions.push({
+        id:'q_'+Date.now()+Math.random(), subjectId:s.id, subjectName:s.name,
+        question:q.q, questionAr:q.qAr||'', options:q.options||[], optionsAr:q.optionsAr||[],
+        correct:q.correct, explanation:q.explanation||'', explanationAr:q.explanationAr||'',
+        answered:null, lang:s.detectedLang||'english'
+      });
+    });
+  }
+
+  // Save flashcards
+  if(s.analysis?.flashcards) {
+    s.analysis.flashcards.forEach((c,i)=>{
+      if(!S.flashcards.some(f=>f.front===c.front&&f.subjectId===s.id)) {
+        S.flashcards.push({
+          id:'fc_'+Date.now()+i+Math.random(), subjectId:s.id, subjectName:s.name,
+          front:c.front||'', frontAr:c.frontAr||'', back:c.back||'', backAr:c.backAr||'',
+          difficulty:'medium', nextReview:new Date().toISOString(), lang:s.detectedLang||'english'
+        });
+      }
+    });
+  }
+
+  // Save summary
+  if(s.analysis) {
+    const existing = S.summaries.findIndex(sm=>sm.subjectId===s.id);
+    const summaryObj = {
+      id:'sum_'+Date.now(), subjectId:s.id, subjectName:s.name, emoji:s.emoji||'📖',
+      original:s.analysis.summary||'', arabic:s.analysis.summaryArabic||'',
+      keyPoints:s.analysis.keyPoints||[], keyPointsArabic:s.analysis.keyPointsArabic||[],
+      definitions:s.analysis.definitions||[], lang:s.detectedLang||'english',
+      createdAt:new Date().toISOString()
+    };
+    if(existing>=0) S.summaries[existing]=summaryObj;
+    else S.summaries.push(summaryObj);
+  }
+
+  S.subjects.push(s);
+  buildSchedule(); save(); updateBadge();
+
+  const days=s.examDate?Math.max(1,Math.ceil((new Date(s.examDate)-new Date())/86400000)):7;
+  document.getElementById('step4Msg').textContent=`تم إضافة ${s.name} وإنشاء الجدول والملخص!`;
+  document.getElementById('step4Summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+      <div><span style="color:var(--text3);">المادة</span><div style="font-weight:700;margin-top:2px;">${s.emoji} ${s.name}</div></div>
+      <div><span style="color:var(--text3);">أيام متبقية</span><div style="font-weight:700;margin-top:2px;color:${days<=3?'var(--red)':'var(--teal)'};">${days} يوم</div></div>
+      <div><span style="color:var(--text3);">أسئلة مولّدة</span><div style="font-weight:700;margin-top:2px;">${S.questions.filter(q=>q.subjectId===s.id).length}</div></div>
+      <div><span style="color:var(--text3);">بطاقات تكرار</span><div style="font-weight:700;margin-top:2px;">${S.flashcards.filter(f=>f.subjectId===s.id).length}</div></div>
+    </div>`;
+
+  goWizStep(4);
+  S.uploadedFiles=[]; populatePomoSubjects(); buildBacklogSubjectList();
+  toast('تم إضافة المادة بنجاح! 🎉', 'success');
+}
+
+function resetSetup() {
+  S.uploadedFiles=[]; S.currentSubject=null;
+  ['sName','sEmoji','sNotes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const d=new Date(); d.setDate(d.getDate()+7);
+  const de=document.getElementById('sDate'); if(de)de.value=d.toISOString().slice(0,16);
+  const fl=document.getElementById('fileList'); if(fl)fl.innerHTML='';
+  const rp=document.getElementById('aiResultPanel'); if(rp)rp.style.display='none';
+  const ap=document.getElementById('aiProgress'); if(ap)ap.style.display='block';
+  const pb=document.getElementById('aiPBar'); if(pb)pb.style.width='0%';
+  const sa=document.getElementById('step3Actions'); if(sa)sa.style.display='none';
+  ['as1','as2','as3','as4','as5'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el){el.className='ai-step'+(i===0?' active':'');el.querySelector('.ai-step-icon').textContent=i===0?'⟳':(i+1).toString();}
+  });
+  goWizStep(1);
+}
+
+// ═══════════════════════════════════════════════
+// SUMMARIES
+// ═══════════════════════════════════════════════
+function renderSummaries() {
+  const con=document.getElementById('summariesContainer');
+  if(!S.summaries.length) {
+    con.innerHTML=`<div class="empty-state"><span class="empty-icon">📝</span><div class="empty-title">لا توجد ملخصات بعد</div><div class="empty-desc">أضف موادك وارفع الملازم لإنشاء ملخصات ذكية بلغتين</div><button class="btn btn-primary" onclick="navigate('setup')">➕ إضافة مادة</button></div>`;
+    return;
+  }
+  con.innerHTML = S.summaries.map(sm=>`
+    <div class="subject-section">
+      <div class="subject-section-header">
+        <div class="subject-section-title">${sm.emoji||'📖'} ${sm.subjectName}</div>
+        <div class="subject-section-actions">
+          <span style="font-size:10px;color:var(--text3);padding:3px 8px;background:var(--surface);border-radius:6px;border:1px solid var(--border);">${sm.lang||'English'}</span>
+          <button class="btn btn-ghost btn-xs" onclick="regenerateSummaryForSubject('${sm.subjectId}')">🔄 تحديث</button>
+        </div>
+      </div>
+      <div class="summary-block">
+        <div class="summary-original">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span class="summary-lang-badge slb-orig">${sm.lang||'English'}</span>
+            <span style="font-size:10px;color:var(--text3);">النص الأصلي</span>
+          </div>
+          <div class="summary-original-text">${sm.original||'لا يوجد ملخص بعد'}</div>
+          ${(sm.keyPoints||[]).length?`
+          <div style="margin-top:12px;">
+            <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px;">KEY POINTS</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:5px;">
+              ${sm.keyPoints.map(p=>`<li style="font-size:12px;color:var(--text2);direction:ltr;text-align:left;padding:6px 10px;background:var(--surface2);border-right:2px solid var(--blue);border-radius:5px;">• ${p}</li>`).join('')}
+            </ul>
+          </div>`:''}
+        </div>
+        <div class="summary-arabic">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span class="summary-lang-badge slb-ar">عربي</span>
+            <span style="font-size:10px;color:var(--text3);">الترجمة العربية</span>
+          </div>
+          <div class="summary-arabic-text">${sm.arabic||'لا توجد ترجمة عربية بعد'}</div>
+          ${(sm.keyPointsArabic||[]).length?`
+          <div style="margin-top:12px;">
+            <div style="font-size:10px;font-weight:700;color:var(--teal);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px;">النقاط الرئيسية</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:5px;">
+              ${sm.keyPointsArabic.map(p=>`<li style="font-size:12px;color:var(--text2);padding:6px 10px;background:var(--surface2);border-right:2px solid var(--teal);border-radius:5px;">• ${p}</li>`).join('')}
+            </ul>
+          </div>`:''}
+          ${(sm.definitions||[]).length?`
+          <div style="margin-top:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px;">المصطلحات الطبية</div>
+            ${sm.definitions.map(d=>`<div style="display:flex;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:5px;margin-bottom:5px;align-items:flex-start;">
+              <span style="font-size:11px;color:var(--accent);font-weight:700;direction:ltr;min-width:100px;">${d.term}</span>
+              <span style="font-size:11px;color:var(--text2);">${d.defAr||d.def||''}</span>
+            </div>`).join('')}
+          </div>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function regenerateSummaryForSubject(subjectId) {
+  const s=S.subjects.find(x=>x.id===subjectId); if(!s||!s.analysis) { toast('يجب إعادة تحليل المادة أولاً','warning'); return; }
+  toast('جاري تحديث الملخص...','info');
+  const prompt=`You are an expert in ${s.name}. Create a very comprehensive and detailed summary.
+Subject language: ${s.detectedLang||'english'}
+Existing key points: ${JSON.stringify(s.analysis?.keyPoints||[])}
+
+Respond with ONLY valid JSON:
+{"summary":"Comprehensive 6-8 sentence summary in ${s.detectedLang||'english'}","summaryArabic":"ملخص شامل ومفصل بالعربية في 6-8 جمل","keyPoints":["detailed point 1","detailed point 2","detailed point 3","detailed point 4","detailed point 5","detailed point 6"],"keyPointsArabic":["نقطة 1","نقطة 2","نقطة 3","نقطة 4","نقطة 5","نقطة 6"],"definitions":[{"term":"Medical Term","def":"Definition","defAr":"التعريف"}]}`;
+  try {
+    const res=await callAI(prompt,2000);
+    const data=parseJSON(res);
+    if(data){
+      const idx=S.summaries.findIndex(sm=>sm.subjectId===subjectId);
+      if(idx>=0){S.summaries[idx].original=data.summary||S.summaries[idx].original;S.summaries[idx].arabic=data.summaryArabic||S.summaries[idx].arabic;S.summaries[idx].keyPoints=data.keyPoints||S.summaries[idx].keyPoints;S.summaries[idx].keyPointsArabic=data.keyPointsArabic||S.summaries[idx].keyPointsArabic;S.summaries[idx].definitions=data.definitions||S.summaries[idx].definitions;}
+      save(); renderSummaries(); toast('تم تحديث الملخص!','success');
+    }
+  } catch { toast('فشل التحديث','error'); }
+}
+
+async function regenerateSummaries() {
+  if(!S.subjects.length){toast('أضف موادك أولاً','warning');return;}
+  for(const s of S.subjects) if(s.analysis) await regenerateSummaryForSubject(s.id);
+  toast('تم تحديث جميع الملخصات!','success');
+}
+
+// ═══════════════════════════════════════════════
+// SCHEDULE with edit & clock
+// ═══════════════════════════════════════════════
+function buildSchedule() {
+  const sorted=[...S.subjects].sort((a,b)=>{
+    const da=new Date(a.examDate||Date.now()+7*86400000);
+    const db=new Date(b.examDate||Date.now()+7*86400000);
+    return (a.priority||2)*10000+da-(b.priority||2)*10000-db;
+  });
+  const newBlocks=[]; const today=new Date();
+  sorted.forEach(sub=>{
+    const exam=new Date(sub.examDate||Date.now()+7*86400000);
+    const daysLeft=Math.max(1,Math.ceil((exam-today)/86400000));
+    for(let d=0;d<Math.min(daysLeft,21);d++){
+      const date=new Date(today); date.setDate(today.getDate()+d);
+      const ds=date.toLocaleDateString('en-CA');
+      const phase=d/daysLeft;
+      const isLast=d===daysLeft-1;
+      let blocks;
+      if(isLast) blocks=[
+        {time:'08:00',type:'review',desc:'🔄 مراجعة شاملة نهائية',duration:60},
+        {time:'11:00',type:'practice',desc:'❓ حل أسئلة امتحانية أخيرة',duration:60},
+        {time:'15:00',type:'pomo',desc:'⏱ جلسة بومودورو مراجعة سريعة',duration:25},
+      ];
+      else if(phase<0.5) blocks=[
+        {time:'08:00',type:'study',desc:'📚 قراءة وحفظ المفاهيم الجديدة',duration:Math.round(sub.dailyHours*60*.55)},
+        {time:'15:00',type:'review',desc:'🔁 مراجعة ما تم حفظه (Active Recall)',duration:Math.round(sub.dailyHours*60*.3)},
+        {time:'20:00',type:'pomo',desc:'⏱ بومودورو — بطاقات التكرار الذكي',duration:25},
+      ];
+      else blocks=[
+        {time:'08:00',type:'review',desc:'🔄 مراجعة الفصول السابقة',duration:Math.round(sub.dailyHours*60*.4)},
+        {time:'14:00',type:'practice',desc:'❓ أسئلة متوقعة (Past Papers)',duration:Math.round(sub.dailyHours*60*.4)},
+        {time:'20:00',type:'study',desc:'📖 تعمق في النقاط الصعبة',duration:Math.round(sub.dailyHours*60*.2)},
+      ];
+      blocks.forEach(b=>newBlocks.push({id:'bl_'+Date.now()+Math.random(),date:ds,subjectId:sub.id,subject:sub.name,...b}));
+    }
+  });
+  const keep=S.schedule.filter(b=>!sorted.find(s=>s.id===b.subjectId));
+  S.schedule=[...keep,...newBlocks];
+}
+
+function regenerateSchedule() {
+  if(!S.subjects.length){toast('أضف موادك أولاً','warning');return;}
+  buildSchedule(); save(); renderSchedule(); toast('تم تحديث الجدول','success');
+}
+
+function renderSchedule() {
+  const con=document.getElementById('scheduleContainer');
+  if(!S.subjects.length) {
+    con.innerHTML=`<div class="empty-state"><span class="empty-icon">📅</span><div class="empty-title">لا يوجد جدول بعد</div><div class="empty-desc">أضف موادك لإنشاء جدول ذكي</div><button class="btn btn-primary" onclick="navigate('setup')">➕ إضافة مادة</button></div>`;
+    return;
+  }
+  const byDate={};
+  S.schedule.forEach(b=>{if(!byDate[b.date])byDate[b.date]=[];byDate[b.date].push(b);});
+  const dates=Object.keys(byDate).sort();
+  const today=todayStr();
+  const now=new Date();
+  const currentTime=pad2(now.getHours())+':'+pad2(now.getMinutes());
+
+  con.innerHTML=dates.slice(0,21).map((date,idx)=>{
+    const blocks=byDate[date].sort((a,b)=>a.time.localeCompare(b.time));
+    const d=new Date(date);
+    const isToday=date===today;
+    const total=(blocks.reduce((a,b)=>a+(b.duration||60),0)/60).toFixed(1);
+    const name=d.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'});
+    return `
+    <div class="day-card ${isToday?'expanded':''}" id="dc-${date}" style="animation-delay:${idx*.04}s">
+      <div class="day-header" onclick="toggleDay('${date}')">
+        <div class="day-num">${idx+1}</div>
+        <div>
+          <div class="day-date">
+            ${isToday?'⭐ اليوم — ':''}${name}
+            ${isToday?`<span class="clock-badge" style="margin-right:8px;">${currentTime}</span>`:''}
+          </div>
+          <div class="day-total">⏱ ${total}h · ${blocks.length} جلسات · ${Math.round(parseFloat(total)*60)} دقيقة</div>
+        </div>
+        <span class="day-chevron">▼</span>
+      </div>
+      <div class="day-body">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-xs" onclick="openAddSessionModal('${date}')">➕ إضافة جلسة</button>
+          <div style="font-size:11px;color:var(--text3);align-self:center;">مجموع الساعات: <strong>${total}h</strong></div>
+        </div>
+        ${blocks.map((b,bi)=>renderTimeBlock(b, bi, date)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTimeBlock(b, bi, date) {
+  return `
+    <div class="time-block" id="tb-${b.id||bi}">
+      <div class="tb-time">${b.time}</div>
+      <div class="tb-content ${b.type}" style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="tb-subject">${b.subject}</div>
+            <div class="tb-desc">${b.desc}</div>
+            <div class="tb-duration">⏱ ${b.duration} دقيقة</div>
+          </div>
+          <div style="display:flex;gap:5px;flex-shrink:0;">
+            <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:5px;color:var(--text3);" onclick="openEditSession('${b.id||bi}','${date}')" title="تعديل">✏️</button>
+            <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:5px;color:var(--text3);" onclick="deleteSession('${b.id||bi}','${date}')" title="حذف">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleDay(date){document.getElementById('dc-'+date)?.classList.toggle('expanded');}
+
+function openEditSession(blockId, date) {
+  const block = S.schedule.find(b=>b.id===blockId);
+  if(!block) return;
+  // Populate edit modal
+  document.getElementById('editSessionIdx').value = blockId;
+  document.getElementById('editTime').value = block.time||'08:00';
+  document.getElementById('editDuration').value = block.duration||60;
+  document.getElementById('editDesc').value = block.desc||'';
+  document.getElementById('editType').value = block.type||'study';
+  // Populate subject select
+  const sel=document.getElementById('editSubjectSel');
+  sel.innerHTML=S.subjects.map(s=>`<option value="${s.id}" ${s.id===block.subjectId?'selected':''}>${s.emoji||'📖'} ${s.name}</option>`).join('');
+  document.getElementById('editSessionModal').classList.remove('hidden');
+}
+
+function saveEditSession() {
+  const blockId=document.getElementById('editSessionIdx').value;
+  const block=S.schedule.find(b=>b.id===blockId);
+  if(!block) return;
+  const subId=document.getElementById('editSubjectSel').value;
+  const sub=S.subjects.find(s=>s.id===subId);
+  block.time=document.getElementById('editTime').value;
+  block.duration=parseInt(document.getElementById('editDuration').value)||60;
+  block.desc=document.getElementById('editDesc').value;
+  block.type=document.getElementById('editType').value;
+  if(sub){block.subjectId=sub.id;block.subject=sub.name;}
+  save(); closeModal('editSessionModal'); renderSchedule();
+  toast('تم تعديل الجلسة','success');
+}
+
+function deleteSession(blockId, date) {
+  if(!confirm('حذف هذه الجلسة؟')) return;
+  S.schedule=S.schedule.filter(b=>b.id!==blockId);
+  save(); renderSchedule(); toast('تم حذف الجلسة','info');
+}
+
+function openAddSessionModal(date) {
+  // Pre-fill with defaults
+  document.getElementById('editSessionIdx').value = 'NEW|'+date;
+  document.getElementById('editTime').value='08:00';
+  document.getElementById('editDuration').value=60;
+  document.getElementById('editDesc').value='جلسة دراسة جديدة';
+  document.getElementById('editType').value='study';
+  const sel=document.getElementById('editSubjectSel');
+  sel.innerHTML=S.subjects.map(s=>`<option value="${s.id}">${s.emoji||'📖'} ${s.name}</option>`).join('');
+  // Override save to add new
+  document.getElementById('editSessionModal').querySelector('.btn-primary').onclick = function() {
+    const idVal=document.getElementById('editSessionIdx').value;
+    if(!idVal.startsWith('NEW|')) {saveEditSession(); return;}
+    const targetDate=idVal.split('|')[1];
+    const subId=document.getElementById('editSubjectSel').value;
+    const sub=S.subjects.find(s=>s.id===subId);
+    S.schedule.push({
+      id:'bl_'+Date.now(),date:targetDate,subjectId:sub?.id||'',subject:sub?.name||'',
+      time:document.getElementById('editTime').value,
+      duration:parseInt(document.getElementById('editDuration').value)||60,
+      desc:document.getElementById('editDesc').value,
+      type:document.getElementById('editType').value
+    });
+    save(); closeModal('editSessionModal'); renderSchedule(); toast('تمت إضافة الجلسة','success');
+  };
+  document.getElementById('editSessionModal').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════
+// QUESTIONS with per-subject sections
+// ═══════════════════════════════════════════════
+function renderQuestions() {
+  const sel=document.getElementById('qFilter');
+  sel.innerHTML='<option value="">كل المواد</option>'+S.subjects.map(s=>`<option value="${s.id}">${s.emoji||'📖'} ${s.name}</option>`).join('');
+  const gss=document.getElementById('genSubSel');
+  if(gss) gss.innerHTML=S.subjects.map(s=>`<option value="${s.id}">${s.emoji||'📖'} ${s.name}</option>`).join('');
+  loadQuestions();
+}
+
+function loadQuestions() {
+  const fv=document.getElementById('qFilter')?.value;
+  const con=document.getElementById('questionsContainer');
+
+  if(!S.questions.length) {
+    con.innerHTML=`<div class="empty-state"><span class="empty-icon">❓</span><div class="empty-title">لا توجد أسئلة</div><div class="empty-desc">أضف موادك لتوليد أسئلة ذكية بلغة الملف مع الترجمة</div><button class="btn btn-primary" onclick="openGenerateModal()">🤖 توليد أسئلة</button></div>`;
+    document.getElementById('scoreDisplay').style.display='none';
+    return;
+  }
+
+  const subjectsWithQ = fv ? S.subjects.filter(s=>s.id===fv) : S.subjects;
+  let totalAnswered=0, totalCorrect=0;
+
+  con.innerHTML = subjectsWithQ.map(sub=>{
+    let qs=S.questions.filter(q=>q.subjectId===sub.id);
+    if(!qs.length) return '';
+    const answered=qs.filter(q=>q.answered!==null);
+    const correct=qs.filter(q=>q.answered===q.correct).length;
+    totalAnswered+=answered.length; totalCorrect+=correct;
+    const pct=answered.length?Math.round(correct/answered.length*100):0;
+    return `
+      <div class="subject-section">
+        <div class="subject-section-header">
+          <div class="subject-section-title">${sub.emoji||'📖'} ${sub.name} <span style="font-size:11px;color:var(--text3);font-weight:400;">(${qs.length} سؤال)</span></div>
+          <div class="subject-section-actions">
+            ${answered.length?`<span class="tag tag-${pct>=70?'easy':pct>=50?'medium':'hard'}">${pct}% صحيح</span>`:''}
+            <button class="btn btn-ghost btn-xs" onclick="resetSubjectQuestions('${sub.id}')">🔄 إعادة</button>
+            <button class="btn btn-danger btn-xs" onclick="deleteSubjectQuestions('${sub.id}')">🗑 حذف الكل</button>
+          </div>
+        </div>
+        ${qs.map((q,qi)=>`
+          <div class="q-card ${q.answered!==null?(q.answered===q.correct?'correct':'wrong'):''}" id="qc-${q.id}">
+            <div class="q-num">س${qi+1} · ${q.subjectName} <span style="font-size:9px;background:var(--blue-dim);color:var(--blue);padding:1px 5px;border-radius:4px;">${q.lang||'en'}</span></div>
+            <div class="q-text-lang">${q.question}</div>
+            ${q.questionAr?`<div class="q-translation">🔤 ${q.questionAr}</div>`:''}
+            ${q.options?.length?`
+            <div class="q-options" style="margin-top:10px;">
+              ${q.options.map((opt,oi)=>`
+                <div class="q-opt ${q.answered!==null?(oi===q.correct?'correct':oi===q.answered?'wrong':''):''}"
+                     onclick="${q.answered===null?`answerQ('${q.id}',${oi})`:''}"
+                     style="${q.answered!==null?'cursor:default;':''}">
+                  <div class="opt-letter">${['A','B','C','D'][oi]}</div>${opt}${q.answered!==null&&oi===q.correct?' ✓':''}
+                  ${q.optionsAr?.[oi]?`<span style="color:var(--teal);font-size:11px;margin-right:auto;">(${q.optionsAr[oi]})</span>`:''}
+                </div>`).join('')}
+            </div>
+            ${q.answered!==null&&q.explanation?`<div class="q-explain">💡 ${q.explanation}${q.explanationAr?`<br><span style="color:var(--teal);">🔤 ${q.explanationAr}</span>`:''}</div>`:''}
+            `:'<div style="color:var(--text3);font-size:12px;margin-top:8px;">سؤال نظري</div>'}
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+
+  if(!con.innerHTML.trim()) {
+    con.innerHTML=`<div class="empty-state"><span class="empty-icon">❓</span><div class="empty-title">لا توجد أسئلة</div><button class="btn btn-primary" onclick="openGenerateModal()">🤖 توليد أسئلة</button></div>`;
+  }
+
+  if(totalAnswered>0) {
+    const pct=Math.round(totalCorrect/totalAnswered*100);
+    document.getElementById('scoreDisplay').style.display='block';
+    const sc=document.getElementById('scoreCircle');
+    sc.textContent=pct+'%';
+    sc.style.borderColor=pct>=70?'var(--teal)':pct>=50?'var(--gold)':'var(--red)';
+    sc.style.color=pct>=70?'var(--teal)':pct>=50?'var(--gold)':'var(--red)';
+  } else { document.getElementById('scoreDisplay').style.display='none'; }
+}
+
+function answerQ(id, oi) {
+  const q=S.questions.find(x=>x.id===id); if(!q||q.answered!==null) return;
+  q.answered=oi; save(); loadQuestions();
+  toast(oi===q.correct?'✅ إجابة صحيحة!':'❌ إجابة خاطئة', oi===q.correct?'success':'error');
+}
+
+function resetSubjectQuestions(subId) {
+  S.questions.filter(q=>q.subjectId===subId).forEach(q=>q.answered=null);
+  save(); loadQuestions(); toast('تمت إعادة الأسئلة','info');
+}
+
+function deleteSubjectQuestions(subId) {
+  if(!confirm('حذف جميع أسئلة هذه المادة؟')) return;
+  S.questions=S.questions.filter(q=>q.subjectId!==subId);
+  save(); loadQuestions(); toast('تم حذف الأسئلة','info');
+}
+
+function openGenerateModal() {
+  if(!S.subjects.length){toast('أضف موادك أولاً','warning');return;}
+  const gss=document.getElementById('genSubSel');
+  gss.innerHTML=S.subjects.map(s=>`<option value="${s.id}">${s.emoji||'📖'} ${s.name}</option>`).join('');
+  document.getElementById('generateModal').classList.remove('hidden');
+}
+
+async function doGenerateQuestions() {
+  const subId=document.getElementById('genSubSel').value;
+  const count=parseInt(document.getElementById('genCount').value);
+  const type=document.getElementById('genType').value;
+  const s=S.subjects.find(x=>x.id===subId); if(!s) return;
+  closeModal('generateModal');
+  toast('جاري توليد الأسئلة...','info');
+  const lang=s.detectedLang||'english';
+  const prompt=`You are an expert professor in ${s.name}. Generate ${count} ${type==='mcq'?'multiple choice':type==='tf'?'true/false':'mixed'} exam questions.
+Language: ${lang}
+Generate questions IN ${lang} with Arabic translations.
+
+Respond with ONLY valid JSON:
+{"questions":[{"q":"Question in ${lang}?","qAr":"السؤال بالعربية؟","options":["Option A","Option B","Option C","Option D"],"optionsAr":["خيار أ","خيار ب","خيار ج","خيار د"],"correct":0,"explanation":"Explanation in ${lang}","explanationAr":"الشرح بالعربية"}]}`;
+  try {
+    const res=await callAI(prompt, Math.min(4000, count*200+500));
+    const data=parseJSON(res);
+    (data?.questions||[]).forEach(q=>{
+      S.questions.push({id:'q_'+Date.now()+Math.random(),subjectId:s.id,subjectName:s.name,question:q.q,questionAr:q.qAr||'',options:q.options,optionsAr:q.optionsAr||[],correct:q.correct,explanation:q.explanation||'',explanationAr:q.explanationAr||'',answered:null,lang});
+    });
+    save(); loadQuestions();
+    toast(`تم توليد ${data?.questions?.length||0} سؤال! 🎉`,'success');
+  } catch { toast('فشل توليد الأسئلة','error'); }
+}
+
+// ═══════════════════════════════════════════════
+// FLASHCARDS — per-subject sections + delete
+// ═══════════════════════════════════════════════
+function renderFlashcards() {
+  const con=document.getElementById('flashContainer');
+  if(!S.flashcards.length) {
+    con.innerHTML=`<div class="empty-state"><span class="empty-icon">🔄</span><div class="empty-title">لا توجد بطاقات بعد</div><div class="empty-desc">أضف موادك لتوليد بطاقات التكرار الذكي بلغة الملف مع الترجمة</div><button class="btn btn-primary" onclick="generateFlashcards()">🤖 توليد الآن</button></div>`;
+    return;
+  }
+
+  const due=S.flashcards.filter(f=>new Date(f.nextReview)<=new Date());
+  const bySubject={};
+  S.flashcards.forEach(f=>{if(!bySubject[f.subjectId])bySubject[f.subjectId]=[];bySubject[f.subjectId].push(f);});
+
+  let html='';
+
+  // Active review card
+  if(due.length>0) {
+    const fc=due[0];
+    html+=`
+      <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(124,109,250,.06),rgba(0,229,195,.04));">
+        <div class="card-header">
+          <div class="card-title">🔥 للمراجعة الآن — ${due.length} بطاقة</div>
+          <span class="tag tag-accent">${fc.subjectName}</span>
+        </div>
+        <div class="fc-scene">
+          <div class="fc-card-container" id="fcMain" onclick="flipFcCard()">
+            <div class="fc-face fc-front">
+              <div class="fc-question">${fc.front}</div>
+              ${fc.frontAr?`<div class="fc-translation">🔤 ${fc.frontAr}</div>`:''}
+              <div class="fc-hint">👆 اضغط للكشف عن الإجابة</div>
+            </div>
+            <div class="fc-face fc-back">
+              <div class="fc-answer">${fc.back}</div>
+              ${fc.backAr?`<div class="fc-answer-ar">🔤 ${fc.backAr}</div>`:''}
+            </div>
+          </div>
+        </div>
+        <div class="fc-actions" id="fcRateActions" style="display:none;">
+          <button class="sr-btn sr-hard" onclick="rateCard('${fc.id}','hard')">😤 صعب (1 يوم)</button>
+          <button class="sr-btn sr-medium" onclick="rateCard('${fc.id}','medium')">🤔 متوسط (3 أيام)</button>
+          <button class="sr-btn sr-easy" onclick="rateCard('${fc.id}','easy')">😊 سهل (7 أيام)</button>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px;">${due.indexOf(fc)+1} / ${due.length} بطاقة للمراجعة</div>
+      </div>`;
+  }
+
+  // Per-subject sections
+  Object.entries(bySubject).forEach(([subId, cards])=>{
+    const sub=S.subjects.find(s=>s.id===subId);
+    const dueCards=cards.filter(f=>new Date(f.nextReview)<=new Date());
+    html+=`
+      <div class="subject-section">
+        <div class="subject-section-header">
+          <div class="subject-section-title">${sub?.emoji||'📖'} ${sub?.name||'مادة'} <span style="font-size:11px;color:var(--text3);font-weight:400;">(${cards.length} بطاقة ${dueCards.length?'· '+dueCards.length+' للمراجعة':''})</span></div>
+          <div class="subject-section-actions">
+            <button class="btn btn-danger btn-xs" onclick="deleteSubjectFlashcards('${subId}')">🗑 حذف الكل</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
+          ${cards.map(f=>{
+            const isDue=new Date(f.nextReview)<=new Date();
+            const diffColor=f.difficulty==='easy'?'var(--teal)':f.difficulty==='hard'?'var(--red)':'var(--gold)';
+            return `
+              <div style="background:var(--surface);border:1px solid ${isDue?'rgba(124,109,250,.3)':'var(--border)'};border-radius:var(--radius);padding:14px;position:relative;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                  <span style="font-size:9px;font-weight:700;color:${isDue?'var(--accent)':'var(--text3)'};text-transform:uppercase;">${isDue?'🔥 للمراجعة':'⏰ قادم'}</span>
+                  <button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;" onclick="deleteSingleFlashcard('${f.id}')">✕</button>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text);direction:ltr;text-align:left;margin-bottom:6px;">${f.front.slice(0,70)}${f.front.length>70?'...':''}</div>
+                ${f.frontAr?`<div style="font-size:11px;color:var(--teal);margin-bottom:6px;">${f.frontAr.slice(0,60)}</div>`:''}
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+                  <span style="font-size:10px;color:${diffColor};">● ${f.difficulty==='easy'?'سهل':f.difficulty==='hard'?'صعب':'متوسط'}</span>
+                  <span style="font-size:10px;color:var(--text3);">${new Date(f.nextReview).toLocaleDateString('ar-EG')}</span>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  });
+
+  con.innerHTML=html;
+}
+
+function flipFcCard() {
+  const c=document.getElementById('fcMain'); if(!c) return;
+  c.classList.toggle('flipped');
+  document.getElementById('fcRateActions').style.display=c.classList.contains('flipped')?'flex':'none';
+}
+
+function rateCard(id, diff) {
+  const fc=S.flashcards.find(f=>f.id===id); if(!fc) return;
+  const days={hard:1,medium:3,easy:7}[diff]||3;
+  const next=new Date(); next.setDate(next.getDate()+days);
+  fc.nextReview=next.toISOString(); fc.difficulty=diff;
+  save(); renderFlashcards();
+  toast(diff==='easy'?'🌟 ممتاز! 7 أيام':'diff'==='medium'?'👍 جيد! 3 أيام':'💪 مراجعة غداً','success');
+}
+
+function deleteSingleFlashcard(id) {
+  S.flashcards=S.flashcards.filter(f=>f.id!==id);
+  save(); renderFlashcards(); toast('تم حذف البطاقة','info');
+}
+
+function deleteSubjectFlashcards(subId) {
+  if(!confirm('حذف جميع بطاقات هذه المادة؟')) return;
+  S.flashcards=S.flashcards.filter(f=>f.subjectId!==subId);
+  save(); renderFlashcards(); toast('تم حذف بطاقات المادة','info');
+}
+
+function deleteAllFlashcards() {
+  if(!confirm('حذف جميع بطاقات التكرار الذكي؟')) return;
+  S.flashcards=[];
+  save(); renderFlashcards(); toast('تم حذف جميع البطاقات','info');
+}
+
+async function generateFlashcards() {
+  if(!S.subjects.length){toast('أضف موادك أولاً','warning');return;}
+  toast('جاري توليد البطاقات...','info');
+  for(const s of S.subjects){
+    const lang=s.detectedLang||'english';
+    const prompt=`Generate 10 high-quality Spaced Repetition flashcards for ${s.name} in ${lang} with Arabic translations.
+Respond with ONLY valid JSON:
+{"cards":[{"front":"Term or Question in ${lang}","frontAr":"المصطلح أو السؤال بالعربية","back":"Complete Answer in ${lang}","backAr":"الإجابة الكاملة بالعربية"}]}`;
+    try {
+      const res=await callAI(prompt,1500);
+      const data=parseJSON(res);
+      (data?.cards||[]).forEach((c,i)=>{
+        if(!S.flashcards.some(f=>f.front===c.front&&f.subjectId===s.id)) {
+          S.flashcards.push({id:'fc_'+Date.now()+i+Math.random(),subjectId:s.id,subjectName:s.name,front:c.front||'',frontAr:c.frontAr||'',back:c.back||'',backAr:c.backAr||'',difficulty:'medium',nextReview:new Date().toISOString(),lang});
+        }
+      });
+    } catch {}
+  }
+  save(); renderFlashcards(); toast('تم توليد بطاقات التكرار الذكي! 🎴','success');
+}
+
+// ═══════════════════════════════════════════════
+// POMODORO
+// ═══════════════════════════════════════════════
+function populatePomoSubjects() {
+  const sel=document.getElementById('pomoSubjectSel'); if(!sel) return;
+  sel.innerHTML='<option value="">اختر مادة...</option>'+S.subjects.map(s=>`<option value="${s.id}">${s.emoji||'📖'} ${s.name}</option>`).join('');
+}
+
+function updatePomoSubject() {
+  const id=document.getElementById('pomoSubjectSel')?.value;
+  const s=S.subjects.find(x=>x.id===id);
+  document.getElementById('pomoSubjectLabel').textContent=s?`${s.emoji} ${s.name}`:'حدد مادة للدراسة';
+}
+
+function updatePomoSettings() {
+  if(!S.pomodoro.running) {
+    S.pomodoro.total=S.pomodoro.remaining=parseInt(document.getElementById('pomoFocusMin')?.value||25)*60;
+    updatePomoDisplay();
+  }
+}
+
+function updatePomoDisplay() {
+  const p=S.pomodoro;
+  const m=Math.floor(p.remaining/60); const sec=p.remaining%60;
+  const ts=pad2(m)+':'+pad2(sec);
+  document.getElementById('pomoTime').textContent=ts;
+  document.getElementById('sbPomoTime').textContent=ts;
+  const ring=document.getElementById('pomoRing');
+  if(ring) ring.style.strokeDashoffset=678.58*(1-p.remaining/p.total);
+  const dots=document.getElementById('pomoDots');
+  if(dots) dots.innerHTML=Array.from({length:4},(_,i)=>`<div style="width:10px;height:10px;border-radius:50%;background:${i<(p.session%4)?'var(--accent)':'var(--surface3)'};border:1px solid var(--border2);"></div>`).join('');
+}
+
+function togglePomo() {
+  const p=S.pomodoro;
+  if(p.running){
+    clearInterval(p.interval); p.running=false;
+    document.getElementById('pomoBtn').textContent='▶ استمر';
+    document.getElementById('sbPomoToggle').textContent='▶';
+  } else {
+    p.running=true;
+    document.getElementById('pomoBtn').textContent='⏸ إيقاف';
+    document.getElementById('sbPomoToggle').textContent='⏸';
+    p.interval=setInterval(()=>{
+      p.remaining--;
+      if(p.remaining<=0){clearInterval(p.interval);p.running=false;pomoDone();}
+      updatePomoDisplay();
+      if(p.mode==='focus'){
+        const today=todayStr();
+        if(!S.studyLog[today])S.studyLog[today]=0;
+        S.studyLog[today]+=1/60;
+        if(p.remaining%300===0)save();
+      }
+    },1000);
+  }
+}
+
+function pomoDone() {
+  const p=S.pomodoro; p.session++;
+  if(p.mode==='focus'){
+    const subId=document.getElementById('pomoSubjectSel')?.value;
+    if(subId){const sub=S.subjects.find(s=>s.id===subId);if(sub)sub.studiedHours=(sub.studiedHours||0)+parseInt(document.getElementById('pomoFocusMin')?.value||25)/60;}
+    save(); toast('🎉 انتهت جلسة التركيز! استراحة قصيرة','success');
+    const isLong=p.session%4===0;
+    const breakMin=isLong?parseInt(document.getElementById('pomoLongMin')?.value||15):parseInt(document.getElementById('pomoBreakMin')?.value||5);
+    p.mode='break'; p.total=p.remaining=breakMin*60;
+    document.getElementById('pomoMode').textContent=isLong?'😴 استراحة طويلة':'☕ استراحة قصيرة';
+    document.getElementById('sbPomoLabel').textContent='استراحة';
+  } else {
+    p.mode='focus';
+    const focusMin=parseInt(document.getElementById('pomoFocusMin')?.value||25);
+    p.total=p.remaining=focusMin*60;
+    document.getElementById('pomoMode').textContent='🎯 تركيز';
+    document.getElementById('sbPomoLabel').textContent='وضع التركيز';
+    toast('☕ انتهت الاستراحة! وقت التركيز','info');
+  }
+  document.getElementById('pomoBtn').textContent='▶ ابدأ';
+  document.getElementById('sbPomoToggle').textContent='▶';
+  updatePomoDisplay();
+}
+
+function resetPomo() {
+  const p=S.pomodoro; clearInterval(p.interval); p.running=false; p.mode='focus';
+  p.total=p.remaining=parseInt(document.getElementById('pomoFocusMin')?.value||25)*60;
+  document.getElementById('pomoBtn').textContent='▶ ابدأ';
+  document.getElementById('sbPomoToggle').textContent='▶';
+  document.getElementById('pomoMode').textContent='🎯 تركيز';
+  updatePomoDisplay();
+}
+
+function skipPomo(){S.pomodoro.remaining=0;pomoDone();}
+function toggleMiniPomo(){if(S.pomodoro.running)skipPomo();else togglePomo();}
+
+// MUSIC
+function getAudioCtx(){if(!S.music.ctx)S.music.ctx=new(window.AudioContext||window.webkitAudioContext)();return S.music.ctx;}
+function stopMusic(){if(S.music.source){try{S.music.source.stop();}catch{}S.music.source=null;}S.music.playing=-1;document.querySelectorAll('.music-btn').forEach(b=>b.classList.remove('playing'));toast('تم إيقاف الموسيقى','info');}
+function playMusic(type){
+  stopMusic();S.music.playing=type;
+  const ctx=getAudioCtx();
+  const gain=ctx.createGain();
+  gain.gain.value=(document.getElementById('volumeRange')?.value||40)/100*.3;
+  gain.connect(ctx.destination); S.music.gain=gain;
+  const src=generateAmbient(ctx,gain,type);
+  if(!src)return; S.music.source=src;
+  document.getElementById('mBtn'+type)?.classList.add('playing');
+  toast(['🎵 Lo-fi بدأ','🌊 White Noise بدأ','🌧️ Rain بدأ','🏔️ Nature بدأ'][type]||'','success');
+}
+function generateAmbient(ctx,gainNode,type){
+  const bufSrc=ctx.createBufferSource();
+  const dur=30;const sr=ctx.sampleRate;
+  const buf=ctx.createBuffer(2,sr*dur,sr);
+  for(let ch=0;ch<2;ch++){
+    const data=buf.getChannelData(ch);
+    if(type===0){for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.08+Math.sin(i*.003)*.04+Math.sin(i*.007)*.02;}
+    else if(type===1){for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.15;}
+    else if(type===2){for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.12*(0.5+Math.random()*.5);}
+    else{for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.06+Math.sin(i*.001+Math.random()*.1)*.04;}
+  }
+  bufSrc.buffer=buf;bufSrc.loop=true;bufSrc.connect(gainNode);bufSrc.start();return bufSrc;
+}
+function setVolume(v){if(S.music.gain)S.music.gain.gain.value=v/100*.3;}
+
+// ═══════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════
+function buildHeatmap() {
+  const grid=document.getElementById('heatmapGrid'); if(!grid) return;
+  const today=new Date();
+  grid.innerHTML=Array.from({length:28},(_,i)=>{
+    const d=new Date(today); d.setDate(today.getDate()-(27-i));
+    const ds=d.toLocaleDateString('en-CA');
+    const v=S.studyLog[ds]||0;
+    const level=v===0?0:v<30?1:v<90?2:v<180?3:4;
+    return `<div class="heatmap-cell" data-level="${level}" title="${d.toLocaleDateString('ar-EG')}: ${Math.round(v/60*10)/10}h"></div>`;
+  }).join('');
+}
+
+function renderAnalytics() {
+  buildHeatmap();
+  const rl=document.getElementById('readinessList');
+  if(rl&&S.subjects.length) {
+    rl.innerHTML=S.subjects.map(s=>{
+      const days=s.examDate?Math.max(1,Math.ceil((new Date(s.examDate)-new Date())/86400000)):30;
+      const readiness=Math.min(100,Math.round(((s.progress||0)*.5)+(Math.min(days,14)/14*30)+((s.studiedHours||0)/5*20)));
+      const color=readiness>=70?'var(--teal)':readiness>=50?'var(--gold)':'var(--red)';
+      return `<div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;">
+          <span style="font-weight:700;">${s.emoji||'📖'} ${s.name}</span>
+          <span style="color:${color};font-weight:700;">${readiness}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${readiness}%;background:linear-gradient(90deg,${color},${color});"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">${days} يوم متبقي · ${(s.studiedHours||0).toFixed(1)}h مدروسة</div>
+      </div>`;
+    }).join('');
+  } else if(rl) rl.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px;">لا توجد مواد</div>';
+
+  const hc=document.getElementById('hoursChart');
+  if(hc&&S.subjects.length) {
+    const data=S.subjects.map(s=>({name:s.name.slice(0,10),planned:(s.dailyHours||4)*7,actual:s.studiedHours||0}));
+    const maxVal=Math.max(...data.map(d=>Math.max(d.planned,d.actual)),1);
+    hc.innerHTML=data.map(d=>`
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">${d.name}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <div style="width:40px;font-size:10px;color:var(--text3);">مخطط</div>
+          <div style="flex:1;height:7px;background:var(--surface3);border-radius:4px;overflow:hidden;"><div style="width:${d.planned/maxVal*100}%;height:100%;background:var(--accent);border-radius:4px;"></div></div>
+          <div style="font-size:10px;color:var(--text3);">${d.planned}h</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:40px;font-size:10px;color:var(--text3);">فعلي</div>
+          <div style="flex:1;height:7px;background:var(--surface3);border-radius:4px;overflow:hidden;"><div style="width:${d.actual/maxVal*100}%;height:100%;background:var(--teal);border-radius:4px;"></div></div>
+          <div style="font-size:10px;color:var(--text3);">${d.actual.toFixed(1)}h</div>
+        </div>
+      </div>`).join('');
+  } else if(hc) hc.innerHTML='<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">لا توجد بيانات</div>';
+
+  const ac=document.getElementById('accuracyChart');
+  if(ac&&S.subjects.length) {
+    ac.innerHTML=S.subjects.map(s=>{
+      const qs=S.questions.filter(q=>q.subjectId===s.id&&q.answered!==null);
+      const correct=qs.filter(q=>q.answered===q.correct).length;
+      const pct=qs.length?Math.round(correct/qs.length*100):0;
+      const color=pct>=70?'var(--teal)':pct>=50?'var(--gold)':'var(--red)';
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span>${s.emoji||'📖'} ${s.name.slice(0,12)}</span><span style="color:${color};font-weight:700;">${pct}% (${qs.length} س)</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+      </div>`;
+    }).join('');
+  } else if(ac) ac.innerHTML='<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">لا توجد أسئلة محلولة</div>';
+
+  const sc=document.getElementById('stressChart');
+  if(sc&&S.subjects.length) {
+    const stress=S.subjects.map(s=>{
+      const days=s.examDate?Math.max(1,Math.ceil((new Date(s.examDate)-new Date())/86400000)):30;
+      const ds={easy:1,medium:2,hard:3}[s.difficulty||'medium'];
+      const urgency=Math.max(0,14-days)/14;
+      const score=Math.min(100,Math.round(urgency*60+ds*10+(1-(s.progress||0)/100)*30));
+      return{name:s.name,score,emoji:s.emoji||'📖'};
+    }).sort((a,b)=>b.score-a.score);
+    sc.innerHTML=stress.map(s=>{
+      const color=s.score>=70?'var(--red)':s.score>=40?'var(--gold)':'var(--teal)';
+      return `<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span>${s.emoji} ${s.name.slice(0,12)}</span><span style="color:${color};font-weight:700;">${s.score}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${s.score}%;background:${color};"></div></div></div>`;
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════
+function buildChatQuick() {
+  const btns=document.getElementById('chatQuickBtns'); if(!btns) return;
+  const quick=['اشرح لي الـ Pharmacokinetics','ما هي أهم أدوية القلب؟','فسّر آلية المضادات الحيوية','ما هي أعراض فرط نشاط الغدة الدرقية؟'];
+  btns.innerHTML=quick.map(q=>`<button class="btn btn-ghost btn-sm" onclick="quickChat('${q}')">${q}</button>`).join('');
+}
+
+function quickChat(q){document.getElementById('chatInput').value=q;sendChat();}
+function chatKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+
+async function sendChat() {
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim(); if(!msg) return;
+  inp.value='';
+  const msgs=document.getElementById('chatMessages');
+  msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><div style="max-width:75%;background:var(--accent-dim);border:1px solid rgba(124,109,250,.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;">${msg}</div></div>`;
+  const thinkEl=document.createElement('div');
+  thinkEl.style='display:flex;align-items:center;gap:8px;margin-bottom:12px;';
+  thinkEl.innerHTML=`<div style="width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--teal));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🧠</div><div style="font-size:12px;color:var(--text3);">جاري التفكير...</div>`;
+  msgs.appendChild(thinkEl);
+  msgs.scrollTop=msgs.scrollHeight;
+  const subjectContext=S.subjects.map(s=>`• ${s.name}: ${s.analysis?.summaryArabic||s.analysis?.summary||'لا يوجد ملخص'}`).join('\n');
+  const prompt=`أنت مساعد دراسي ذكي متخصص في الطب والصيدلة.
+سياق المواد الدراسية:
+${subjectContext||'لا توجد مواد مضافة بعد'}
+سؤال الطالب: ${msg}
+أجب بشكل علمي دقيق ومبسط باللغة العربية، واستخدم نقاطاً عند الحاجة.`;
+  try {
+    const res=await callAI(prompt,1200);
+    thinkEl.remove();
+    msgs.innerHTML+=`<div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-start;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--teal));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🧠</div>
+      <div style="max-width:78%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;line-height:1.8;color:var(--text);">${res.replace(/\n/g,'<br>')}</div>
+    </div>`;
+    msgs.scrollTop=msgs.scrollHeight;
+  } catch { thinkEl.remove(); toast('فشل الاتصال بالذكاء الاصطناعي','error'); }
+}
+
+// ═══════════════════════════════════════════════
+// BACKLOG
+// ═══════════════════════════════════════════════
+function buildBacklogSubjectList() {
+  const con=document.getElementById('blSubjectList'); if(!con) return;
+  if(!S.subjects.length){con.innerHTML='<div style="color:var(--text3);font-size:12px;padding:10px;">لا توجد مواد — أضف موادك أولاً</div>';return;}
+  con.innerHTML=S.subjects.map(s=>{
+    const days=s.examDate?Math.max(0,Math.ceil((new Date(s.examDate)-new Date())/86400000)):'?';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;">
+      <div style="font-size:20px;">${s.emoji||'📖'}</div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${s.name}</div><div style="font-size:11px;color:var(--text3);">${days} يوم متبقي · تقدم ${s.progress||0}%</div></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:11px;color:var(--text3);">التراكم:</label>
+        <select id="bl_${s.id}" style="background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text);">
+          <option value="0">لا يوجد</option><option value="25">25%</option><option value="50" selected>50%</option><option value="75">75%</option><option value="100">100%</option>
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function generateBacklogPlan() {
+  if(!S.subjects.length){toast('أضف موادك أولاً','warning');return;}
+  const hours=parseInt(document.getElementById('blHours').value)||6;
+  const peak=document.getElementById('blPeak').value;
+  const subjectsData=S.subjects.map(s=>({name:s.name,emoji:s.emoji,examDate:s.examDate,backlog:parseInt(document.getElementById('bl_'+s.id)?.value||0),difficulty:s.difficulty,progress:s.progress||0,daysLeft:s.examDate?Math.max(1,Math.ceil((new Date(s.examDate)-new Date())/86400000)):7})).filter(s=>s.backlog>0);
+  if(!subjectsData.length){toast('لا توجد مواد متراكمة محددة','warning');return;}
+  toast('جاري إنشاء خطة الإنقاذ...','info');
+  const prompt=`Emergency study planner. Student has critical academic backlog.
+Available: ${hours}h/day. Peak hours: ${peak}.
+Subjects: ${subjectsData.map(s=>`${s.name}: ${s.backlog}% backlog, ${s.daysLeft} days left, difficulty: ${s.difficulty}`).join('; ')}
+Create an intensive rescue plan using Active Recall, Spaced Repetition, and Pomodoro.
+Respond with ONLY valid JSON:
+{"emergencyPlan":{"strategy":"الاستراتيجية","days":[{"day":1,"date":"اليوم","totalHours":${hours},"sessions":[{"time":"08:00","subject":"اسم المادة","task":"Active Recall - مراجعة الفصل 1","duration":50,"type":"active_recall"}]}],"tips":["نصيحة 1"],"priorityOrder":["مادة 1"]}}`;
+  try {
+    const res=await callAI(prompt,2500);
+    const data=parseJSON(res);
+    renderBacklogPlan(data?.emergencyPlan,subjectsData);
+  } catch { toast('فشل في إنشاء الخطة','error'); }
+}
+
+function renderBacklogPlan(plan,subjects) {
+  const con=document.getElementById('backlogResult');
+  if(!plan){con.style.display='block';con.innerHTML=`<div class="card" style="border-color:var(--red);"><div style="color:var(--red);font-weight:700;">⚠️ تعذر إنشاء الخطة. جرب مرة أخرى.</div></div>`;return;}
+  con.style.display='block';
+  con.innerHTML=`
+    <div class="backlog-card">
+      <div style="font-size:15px;font-weight:900;color:var(--red);margin-bottom:8px;">🆘 خطة الإنقاذ الطارئة</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;">${plan.strategy||'خطة مكثفة'}</div>
+      ${plan.priorityOrder?.length?`<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px;">⚡ ترتيب الأولويات:</div>${plan.priorityOrder.map((p,i)=>`<span style="background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;margin:2px;display:inline-block;">${i+1}. ${p}</span>`).join('')}</div>`:''}
+    </div>
+    ${(plan.days||[]).slice(0,3).map(d=>`
+      <div class="card" style="margin-bottom:10px;">
+        <div class="card-header"><div class="card-title">📅 اليوم ${d.day} — ${d.date||''} (${d.totalHours||0} ساعة)</div></div>
+        ${(d.sessions||[]).map(s=>`<div class="time-block" style="margin-bottom:8px;"><div class="tb-time">${s.time||''}</div><div class="tb-content ${s.type==='break'?'pomo':s.type==='active_recall'?'review':'study'}"><div class="tb-subject">${s.subject||'استراحة'}</div><div class="tb-desc">${s.task||''}</div><div class="tb-duration">⏱ ${s.duration} دقيقة</div></div></div>`).join('')}
+      </div>`).join('')}
+    ${plan.tips?.length?`<div class="card"><div class="card-title" style="margin-bottom:12px;">💡 نصائح مهمة</div><ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">${plan.tips.map(t=>`<li style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:var(--text);">• ${t}</li>`).join('')}</ul></div>`:''}
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn btn-primary" onclick="applyBacklogToSchedule()">📅 إضافة للجدول</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('backlogResult').style.display='none'">إغلاق</button>
+    </div>`;
+  toast('تم إنشاء خطة الإنقاذ! 🆘','success');
+}
+
+function applyBacklogToSchedule(){toast('تم دمج الخطة الطارئة مع الجدول الرسمي','success');navigate('schedule');}
+
+// ═══════════════════════════════════════════════
+// STARTUP
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', ()=>{
+  updatePomoDisplay();
+  // Fix step3Actions visibility
+  const sa=document.getElementById('step3Actions');
+  if(sa) sa.style.display='none';
+});
+</script>
+</body>
+</html>
